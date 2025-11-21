@@ -22,14 +22,14 @@ export default function FinancePage() {
 
     const filteredRequests = requests.filter((req: PurchaseRequest) => {
         const matchesSearch = req.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            req.created_by.name.toLowerCase().includes(searchTerm.toLowerCase());
+            req.created_by.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'ALL' ? req.status !== 'PENDING' : req.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
 
     const approvedRequests = requests.filter((req: PurchaseRequest) => req.status === 'APPROVED');
     const rejectedRequests = requests.filter((req: PurchaseRequest) => req.status === 'REJECTED');
-    const totalAmount = approvedRequests.reduce((sum, req) => sum + req.amount, 0);
+    const totalAmount = approvedRequests.reduce((sum, req) => sum + Number(req.amount), 0);
 
     return (
         <div className="min-h-screen bg-background">
@@ -141,12 +141,12 @@ export default function FinancePage() {
                                                 <div>
                                                     <CardTitle>{request.title}</CardTitle>
                                                     <CardDescription>
-                                                        Requested by {request.created_by.name} on {new Date(request.created_at).toLocaleDateString()}
+                                                        Requested by {request.created_by} on {new Date(request.created_at).toLocaleDateString()}
                                                     </CardDescription>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-2">
                                                     <StatusBadge status={request.status} />
-                                                    <span className="text-lg font-semibold">${request.amount.toFixed(2)}</span>
+                                                    <span className="text-lg font-semibold">${Number(request.amount).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                         </CardHeader>
@@ -163,34 +163,34 @@ export default function FinancePage() {
                                                         className="flex items-center text-sm font-medium text-primary hover:underline mb-2"
                                                     >
                                                         {isExpanded ? <ChevronUp className="h-4 w-4 mr-1" /> : <ChevronDown className="h-4 w-4 mr-1" />}
-                                                        {isExpanded ? 'Hide' : 'Show'} Items ({request.items.length})
+                                                        {isExpanded ? 'Hide' : 'Show'} Items ({request.items_display.length})
                                                     </button>
 
                                                     {isExpanded && (
-                                                        <PurchaseRequestItemsTable items={request.items} />
+                                                        <PurchaseRequestItemsTable items={request.items_display} />
                                                     )}
                                                 </div>
 
-                                                {request.approved_by && request.approved_by.length > 0 && (
+                                                {request.approvals && request.approvals.length > 0 && (
                                                     <div>
                                                         <h4 className="text-sm font-medium mb-2">Approval History</h4>
                                                         <div className="space-y-2">
-                                                            {request.approved_by.map((approval, index) => (
+                                                            {request.approvals.map((approval, index) => (
                                                                 <div key={index} className="text-sm border-l-2 border-primary pl-3 py-1">
                                                                     <div className="flex items-center gap-2">
-                                                                        {approval.status === 'APPROVED' ? (
+                                                                        {approval.approved ? (
                                                                             <CheckCircle className="h-4 w-4 text-green-600" />
                                                                         ) : (
                                                                             <XCircle className="h-4 w-4 text-red-600" />
                                                                         )}
-                                                                        <span className="font-medium">{approval.approver.full_name}</span>
+                                                                        <span className="font-medium">{approval.approver}</span>
                                                                         <span className="text-muted-foreground">•</span>
                                                                         <span className="text-muted-foreground">
-                                                                            {new Date(approval.timestamp).toLocaleDateString()}
+                                                                            {new Date(approval.created_at).toLocaleDateString()}
                                                                         </span>
                                                                     </div>
-                                                                    {approval.comments && (
-                                                                        <p className="text-muted-foreground mt-1">{approval.comments}</p>
+                                                                    {approval.comment && (
+                                                                        <p className="text-muted-foreground mt-1">{approval.comment}</p>
                                                                     )}
                                                                 </div>
                                                             ))}

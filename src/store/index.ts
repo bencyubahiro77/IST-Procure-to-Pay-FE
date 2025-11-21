@@ -1,12 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
-import dashboardReducer from './slices/dashboardSlice';
 import purchaseRequestsReducer from './slices/purchaseRequestSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    dashboard: dashboardReducer,
     purchaseRequests: purchaseRequestsReducer,
   },
   middleware: (getDefaultMiddleware) =>

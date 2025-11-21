@@ -1,58 +1,50 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '@/config/axios';
 import { API_ENDPOINTS } from '@/config/api';
-import type { LoginRequest, RegisterRequest, User, UserRole } from '@/types';
-import { decodeJWT, isTokenExpired } from '@/utils/jwtDecoder';
+import type { LoginRequest, User, UserResponse } from '@/types';
 
-// Login with email and password
+// Login with username and password
 export const login = createAsyncThunk(
   'auth/login',
   async (credentials: LoginRequest, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(API_ENDPOINTS.LOGIN, credentials);
-      const { access_token } = response.data;
+      // Step 1: Login and get tokens
+      const loginResponse = await axiosInstance.post(API_ENDPOINTS.LOGIN, credentials);
+      const { access, refresh } = loginResponse.data;
 
-      // Decode JWT token to extract user information
-      const decodedToken = decodeJWT(access_token);
-
-      if (!decodedToken) {
-        return rejectWithValue('Invalid token received');
+      if (!access) {
+        return rejectWithValue('No access token received');
       }
 
-      // Extract user data from decoded token
+      // Store tokens
+      localStorage.setItem('access_token', access);
+      localStorage.setItem('refresh_token', refresh);
+
+      // Step 2: Fetch user data
+      const userResponse = await axiosInstance.get<UserResponse>(API_ENDPOINTS.GET_CURRENT_USER);
+      const userData = userResponse.data;
+
+      // Transform to User type
       const user: User = {
-        id: decodedToken.sub || '',
-        email: decodedToken.email || '',
-        full_name: decodedToken.full_name || '',
-        role: (decodedToken.role || 'staff') as UserRole,
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        profile: userData.profile,
       };
 
-      // Store token, user data, and authentication status in localStorage
-      localStorage.setItem('access_token', access_token);
+      // Store user data and authentication status
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('isAuthenticated', 'true');
 
-      return { access_token, user };
+      return { access, refresh, user };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.detail || 'Login failed');
     }
   }
 );
 
-// Register
-export const register = createAsyncThunk(
-  'auth/register',
-  async (userData: RegisterRequest, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post(API_ENDPOINTS.REGISTER, userData);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.detail || 'Registration failed');
-    }
-  }
-);
 
-// Check authentication status from localStorage
+// Check authentication status
 export const checkAuth = createAsyncThunk(
   'auth/checkAuth',
   async (_, { rejectWithValue }) => {
@@ -63,28 +55,37 @@ export const checkAuth = createAsyncThunk(
 
       if (!token || !userStr || isAuthenticated !== 'true') {
         // Clear localStorage if any required item is missing
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('isAuthenticated');
+        localStorage.clear()
         return rejectWithValue('Not authenticated');
       }
 
-      // Check if token is expired
-      if (isTokenExpired(token)) {
-        // Clear localStorage if token is expired
+      // Try to fetch fresh user data from API
+      try {
+        const userResponse = await axiosInstance.get<UserResponse>(API_ENDPOINTS.GET_CURRENT_USER);
+        const userData = userResponse.data;
+
+        const user: User = {
+          id: userData.id,
+          username: userData.username,
+          email: userData.email,
+          profile: userData.profile,
+        };
+
+        // Update localStorage with fresh data
+        localStorage.setItem('user', JSON.stringify(user));
+
+        return { user, access_token: token };
+      } catch (apiError) {
+        // If API call fails (e.g., token expired), clear everything
         localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
         localStorage.removeItem('user');
         localStorage.removeItem('isAuthenticated');
-        return rejectWithValue('Token expired');
+        return rejectWithValue('Session expired');
       }
-
-      const user: User = JSON.parse(userStr);
-      return { user, access_token: token };
-    } catch {
+    } catch (error) {
       // Clear localStorage on any error
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('isAuthenticated');
+      localStorage.clear()
       return rejectWithValue('Not authenticated');
     }
   }
@@ -96,7 +97,7 @@ export const logout = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       // Clear localStorage
-      localStorage.clear()
+      localStorage.clear();
       return null;
     } catch (error: any) {
       return rejectWithValue(error.message);

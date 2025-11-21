@@ -1,21 +1,19 @@
 import type { User, UserRole } from './user.types';
 
-// Authentication-related types
 export interface LoginRequest {
-  email: string;
+  username: string;
   password: string;
-}
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  full_name: string;
 }
 
 export interface AuthResponse {
-  access_token: string;
-  token_type: string;
+  access: string;
+  refresh: string;
+}
+
+export interface LoginResponse {
   user: User;
+  access: string;
+  refresh: string;
 }
 
 export interface AuthState {

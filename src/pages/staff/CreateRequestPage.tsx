@@ -26,7 +26,7 @@ export default function CreateRequestPage() {
     const [itemUnitPrice, setItemUnitPrice] = useState('');
 
     const totalAmount = useMemo(
-        () => items.reduce((sum, item) => sum + item.total_price, 0),
+        () => items.reduce((sum, item) => sum + Number(item.total_price || 0), 0),
         [items]
     );
 
@@ -47,7 +47,7 @@ export default function CreateRequestPage() {
         }
 
         const newItem: PurchaseRequestItem = {
-            id: items.length ? items[items.length - 1].id + 1 : 1,
+            id: items.length ? (items[items.length - 1].id || 0) + 1 : 1,
             name: itemName.trim(),
             qty,
             unit_price: unitPrice,
@@ -61,7 +61,7 @@ export default function CreateRequestPage() {
         setItemDialogOpen(false);
     };
 
-    const handleRemoveItem = (id: number) => {
+    const handleRemoveItem = (id: number | undefined) => {
         setItems((prev) => prev.filter((item) => item.id !== id));
     };
 
@@ -81,8 +81,12 @@ export default function CreateRequestPage() {
         const result = await dispatch(createPurchaseRequest({
             title: title.trim(),
             description: description.trim(),
-            amount: totalAmount,
-            items,
+            amount: totalAmount.toFixed(2),
+            items: items.map(item => ({
+                name: item.name,
+                qty: item.qty,
+                unit_price: String(item.unit_price)
+            })),
             proforma: proforma,
         }));
 
@@ -205,10 +209,10 @@ export default function CreateRequestPage() {
                                                             <td className="py-2 px-3">{item.name}</td>
                                                             <td className="py-2 px-3 text-right">{item.qty}</td>
                                                             <td className="py-2 px-3 text-right">
-                                                                ${item.unit_price.toFixed(2)}
+                                                                ${Number(item.unit_price).toFixed(2)}
                                                             </td>
                                                             <td className="py-2 px-3 text-right">
-                                                                ${item.total_price.toFixed(2)}
+                                                                ${Number(item.total_price).toFixed(2)}
                                                             </td>
                                                             <td className="py-2 px-3 text-right">
                                                                 <Button

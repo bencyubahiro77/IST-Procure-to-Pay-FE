@@ -18,7 +18,7 @@ export const createPurchaseRequest = createAsyncThunk(
             const formData = new FormData();
             formData.append('title', payload.title);
             formData.append('description', payload.description);
-            formData.append('amount', payload.amount.toString());
+            formData.append('amount', payload.amount);
             formData.append('items', JSON.stringify(payload.items));
 
             if (payload.proforma) {
@@ -43,7 +43,15 @@ export const fetchPurchaseRequests = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const response = await axiosInstance.get(API_ENDPOINTS.PURCHASE_REQUESTS);
-            return response.data as PurchaseRequest[];
+            const data = response.data;
+
+            if (Array.isArray(data)) {
+                return data as PurchaseRequest[];
+            } else if (data && Array.isArray(data.results)) {
+                return data.results as PurchaseRequest[];
+            }
+
+            return [] as PurchaseRequest[];
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch purchase requests');
         }

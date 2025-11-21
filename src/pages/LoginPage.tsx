@@ -14,14 +14,24 @@ export default function LoginPage() {
   const dispatch = useAppDispatch();
   const { isLoading, error } = useAppSelector((state) => state.auth);
 
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await dispatch(login({ email, password }));
+    const result = await dispatch(login({ username, password }));
     if (login.fulfilled.match(result)) {
-      navigate('/dashboard');
+      // Navigate based on user role
+      const user = result.payload.user;
+      if (user.profile.role === 'staff') {
+        navigate('/my-requests');
+      } else if (user.profile.role === 'approver_l1' || user.profile.role === 'approver_l2') {
+        navigate('/approvals');
+      } else if (user.profile.role === 'finance') {
+        navigate('/finance');
+      } else {
+        navigate('/my-requests');
+      }
     }
   };
 
@@ -54,13 +64,13 @@ export default function LoginPage() {
 
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="username">Username</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter Your Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="username"
+                    type="text"
+                    placeholder="Enter Your Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     required
                     disabled={isLoading}
                   />

@@ -49,7 +49,7 @@ function App() {
             <Route
               path="/approvals"
               element={
-                <ProtectedRoute requiredRoles={['approvelevel1', 'approvelevel2']}>
+                <ProtectedRoute requiredRoles={['approver_l1', 'approver_l2']}>
                   <ApprovalsPage />
                 </ProtectedRoute>
               }

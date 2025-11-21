@@ -20,7 +20,6 @@ export * from './components.types';
 export type {
     PurchaseRequestStatus,
     PurchaseRequestItem,
-    ApprovalRecord,
     PurchaseRequest,
     PurchaseRequestState,
     PurchaseRequestFormData,

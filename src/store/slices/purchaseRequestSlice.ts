@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import type { PurchaseRequestState, PurchaseRequest } from '@/types';
+import type { PurchaseRequestState} from '@/types';
 import {
     createPurchaseRequest,
     fetchPurchaseRequests,
@@ -19,7 +19,6 @@ const initialState: PurchaseRequestState = {
     lastFetched: null,
 };
 
-// Export actions for use in components
 export {
     createPurchaseRequest,
     fetchPurchaseRequests,

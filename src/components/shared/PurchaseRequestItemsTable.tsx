@@ -17,12 +17,14 @@ export function PurchaseRequestItemsTable({ items }: PurchaseRequestItemsTablePr
                     </tr>
                 </thead>
                 <tbody>
-                    {items.map((item) => (
-                        <tr key={item.id} className="border-t">
+                    {items.map((item, index) => (
+                        <tr key={item.id || index} className="border-t">
                             <td className="py-2 px-3">{item.name}</td>
                             <td className="py-2 px-3 text-right">{item.qty}</td>
-                            <td className="py-2 px-3 text-right">${item.unit_price.toFixed(2)}</td>
-                            <td className="py-2 px-3 text-right">${item.total_price.toFixed(2)}</td>
+                            <td className="py-2 px-3 text-right">${Number(item.unit_price).toFixed(2)}</td>
+                            <td className="py-2 px-3 text-right">
+                                ${item.total_price ? Number(item.total_price).toFixed(2) : '0.00'}
+                            </td>
                         </tr>
                     ))}
                 </tbody>

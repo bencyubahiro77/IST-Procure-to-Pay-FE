@@ -1,47 +1,40 @@
-import type { User } from './user.types';
-
-// Purchase Request Status
 export type PurchaseRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 // Purchase Request Item
 export interface PurchaseRequestItem {
-    id: number;
+    id?: number; // Optional for creation
     name: string;
     qty: number;
-    unit_price: number;
-    total_price: number;
+    unit_price: number | string;
+    total_price?: number | string; // Read-only
 }
 
-// Approval Record
-export interface ApprovalRecord {
-    approver: User;
-    status: 'APPROVED' | 'REJECTED';
-    comments?: string;
-    timestamp: string;
+export interface PurchaseRequestApproval {
+    id: number;
+    approver: string; // Email
+    level: number;
+    approved: boolean;
+    comment: string;
+    created_at: string;
 }
 
-// Purchase Request
 export interface PurchaseRequest {
-    id: number | string;
+    id: string | number;
     title: string;
     description: string;
-    amount: number;
+    amount: string; // Decimal string
     status: PurchaseRequestStatus;
-    created_by: {
-        id: string;
-        email: string;
-        name: string;
-    };
-    approved_by: ApprovalRecord[];
+    created_by: string; // Email
+    last_approved_by: string | null; // Email
     created_at: string;
-    updated_at: string;
-    proforma: string | null;
+    updated_at?: string;
+    proforma?: string | null; // URL
     purchase_order: string | null;
     receipt: string | null;
-    items: PurchaseRequestItem[];
+    items_display: PurchaseRequestItem[];
+    approvals: PurchaseRequestApproval[];
 }
 
-// Purchase Request State
 export interface PurchaseRequestState {
     requests: PurchaseRequest[];
     currentRequest: PurchaseRequest | null;
@@ -51,7 +44,6 @@ export interface PurchaseRequestState {
     lastFetched: number | null;
 }
 
-// Purchase Request Form Data
 export interface PurchaseRequestFormData {
     title: string;
     description: string;
@@ -59,12 +51,15 @@ export interface PurchaseRequestFormData {
     proforma?: File | null;
 }
 
-// Purchase Request Actions
 export interface CreatePurchaseRequestPayload {
     title: string;
     description: string;
-    amount: number;
-    items: PurchaseRequestItem[];
+    amount: string;
+    items: {
+        name: string;
+        qty: number;
+        unit_price: string;
+    }[];
     proforma?: File | null;
 }
 
@@ -72,7 +67,11 @@ export interface UpdatePurchaseRequestPayload {
     id: string | number;
     title?: string;
     description?: string;
-    items?: PurchaseRequestItem[];
+    items?: {
+        name: string;
+        qty: number;
+        unit_price: string;
+    }[];
 }
 
 export interface ApprovePurchaseRequestPayload {

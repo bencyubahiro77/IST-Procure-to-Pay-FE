@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { User, AuthState } from '@/types';
-import { login, register, logout, checkAuth } from '@/store/actions/authActions';
+import { login,logout, checkAuth } from '@/store/actions/authActions';
 
 // Initialize state from localStorage if available
 const getInitialState = (): AuthState => {
@@ -32,7 +32,7 @@ const getInitialState = (): AuthState => {
 const initialState: AuthState = getInitialState();
 
 // Export actions for use in components
-export { login, register, logout, checkAuth };
+export { login, logout, checkAuth };
 
 const authSlice = createSlice({
   name: 'auth',
@@ -66,20 +66,6 @@ const authSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // Register
-    builder
-      .addCase(register.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(register.fulfilled, (state) => {
-        state.isLoading = false;
-      })
-      .addCase(register.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
-      });
-
     // Check Auth
     builder
       .addCase(checkAuth.pending, (state) => {
@@ -103,9 +89,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.error = null;
         // Clear localStorage
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('isAuthenticated');
+        localStorage.clear()
       });
   },
 });

@@ -13,7 +13,7 @@ export default function ProtectedRoute({ children, requiredRoles }: ProtectedRou
 
   // Check role-based access if required roles are specified
   if (requiredRoles && requiredRoles.length > 0) {
-    if (!user || !requiredRoles.includes(user.role)) {
+    if (!user || !requiredRoles.includes(user.profile.role)) {
       // Redirect to dashboard if user doesn't have the required role
       return <Navigate to="/dashboard" replace />;
     }
