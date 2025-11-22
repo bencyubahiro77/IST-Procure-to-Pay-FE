@@ -18,6 +18,7 @@ export default function CreateRequestPage() {
     const { isLoading } = useAppSelector((state) => state.purchaseRequests);
 
     const [title, setTitle] = useState('');
+    const [vendor, setVendor] = useState('');
     const [description, setDescription] = useState('');
     const [items, setItems] = useState<PurchaseRequestItem[]>([]);
     const [proforma, setProforma] = useState<File | null>(null);
@@ -76,13 +77,14 @@ export default function CreateRequestPage() {
     const handleSubmitRequest = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!title.trim() || items.length === 0) {
+        if (!title.trim() || !vendor.trim() || items.length === 0) {
             return;
         }
 
         try {
             await dispatch(createPurchaseRequest({
                 title: title.trim(),
+                vendor: vendor.trim(),
                 description: description.trim(),
                 amount: totalAmount.toFixed(2),
                 items: items.map(item => ({
@@ -146,6 +148,15 @@ export default function CreateRequestPage() {
                                     value={title}
                                     onChange={setTitle}
                                     placeholder="Enter purchase request title"
+                                    required
+                                />
+
+                                <FormField
+                                    id="vendor"
+                                    label="Vendor"
+                                    value={vendor}
+                                    onChange={setVendor}
+                                    placeholder="Enter vendor name"
                                     required
                                 />
 
@@ -260,7 +271,7 @@ export default function CreateRequestPage() {
                                 <Button
                                     type="submit"
                                     className="w-full"
-                                    disabled={!title.trim() || items.length === 0 || isLoading}
+                                    disabled={!title.trim() || !vendor.trim() || items.length === 0 || isLoading}
                                 >
                                     {isLoading ? 'Submitting...' : 'Submit Purchase Request'}
                                 </Button>

@@ -21,6 +21,7 @@ export interface PurchaseRequestApproval {
 export interface PurchaseRequest {
     id: string | number;
     title: string;
+    vendor: string;
     description: string;
     amount: string; // Decimal string
     status: PurchaseRequestStatus;
@@ -46,6 +47,7 @@ export interface PurchaseRequestState {
 
 export interface PurchaseRequestFormData {
     title: string;
+    vendor: string;
     description: string;
     items: PurchaseRequestItem[];
     proforma?: File | null;
@@ -53,6 +55,7 @@ export interface PurchaseRequestFormData {
 
 export interface CreatePurchaseRequestPayload {
     title: string;
+    vendor: string;
     description: string;
     amount: string;
     items: {
@@ -66,6 +69,7 @@ export interface CreatePurchaseRequestPayload {
 export interface UpdatePurchaseRequestPayload {
     id: string | number;
     title?: string;
+    vendor?: string;
     description?: string;
     items?: {
         name: string;
