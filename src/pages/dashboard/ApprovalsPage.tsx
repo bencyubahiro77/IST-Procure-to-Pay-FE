@@ -4,6 +4,8 @@ import { fetchPurchaseRequests, approvePurchaseRequest, rejectPurchaseRequest } 
 import { SimpleHeader } from '@/components/shared/SimpleHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PurchaseRequestItemsTable } from '@/components/shared/PurchaseRequestItemsTable';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { InputDialog } from '@/components/shared/InputDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle, XCircle, Clock, Eye } from 'lucide-react';
@@ -17,31 +19,105 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { useToast } from '@/hooks/use-toast';
 
 export default function ApprovalsPage() {
     const dispatch = useAppDispatch();
+    const { toast } = useToast();
     const { user } = useAppSelector((state) => state.auth);
     const { requests, isLoading } = useAppSelector((state) => state.purchaseRequests);
     const [selectedRequest, setSelectedRequest] = useState<PurchaseRequest | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [approveConfirmOpen, setApproveConfirmOpen] = useState(false);
+    const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+    const [pendingActionRequest, setPendingActionRequest] = useState<PurchaseRequest | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
         dispatch(fetchPurchaseRequests());
     }, [dispatch]);
 
-    const pendingRequests = requests.filter((req: PurchaseRequest) => req.status === 'PENDING');
+    // Helper to check if current user has already acted on this request
+    const hasUserActed = (request: PurchaseRequest): { acted: boolean; approved?: boolean } => {
+        // Check both username and email to be safe, as backend might store either
+        const username = user?.username;
+        const email = user?.email;
 
-    const handleApprove = async (id: string | number) => {
-        const confirmed = confirm('Are you sure you want to approve this request?');
-        if (confirmed) {
-            await dispatch(approvePurchaseRequest({ id, comments: '' }));
+        const userApproval = request.approvals?.find(
+            (approval) => approval.approver === username || approval.approver === email
+        );
+
+        if (userApproval) {
+            return { acted: true, approved: userApproval.approved };
+        }
+        return { acted: false };
+    };
+
+    // Show requests that are PENDING (needing action) OR requests the user has already acted on (history)
+    const relevantRequests = requests.filter((req: PurchaseRequest) => {
+        const userAction = hasUserActed(req);
+        return req.status === 'PENDING' || userAction.acted;
+    });
+
+    const handleApprove = async (request: PurchaseRequest) => {
+        setPendingActionRequest(request);
+        setApproveConfirmOpen(true);
+    };
+
+    const confirmApprove = async () => {
+        if (!pendingActionRequest) return;
+
+        setIsProcessing(true);
+        try {
+            await dispatch(approvePurchaseRequest({ id: pendingActionRequest.id, comments: '' })).unwrap();
+            toast({
+                title: "Request Approved",
+                description: `Successfully approved "${pendingActionRequest.title}"`,
+                variant: "success",
+            });
+            // Refresh the list to show updated status
+            dispatch(fetchPurchaseRequests());
+            setApproveConfirmOpen(false);
+        } catch (error) {
+            toast({
+                title: "Approval Failed",
+                description: "Failed to approve the request. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsProcessing(false);
+            setPendingActionRequest(null);
         }
     };
 
-    const handleReject = async (id: string | number) => {
-        const reason = prompt('Please provide a reason for rejection:');
-        if (reason !== null) {
-            await dispatch(rejectPurchaseRequest({ id, comments: reason }));
+    const handleReject = async (request: PurchaseRequest) => {
+        setPendingActionRequest(request);
+        setRejectDialogOpen(true);
+    };
+
+    const confirmReject = async (reason: string) => {
+        if (!pendingActionRequest) return;
+
+        setIsProcessing(true);
+        try {
+            await dispatch(rejectPurchaseRequest({ id: pendingActionRequest.id, comments: reason })).unwrap();
+            toast({
+                title: "Request Rejected",
+                description: `Successfully rejected "${pendingActionRequest.title}"`,
+                variant: "default",
+            });
+            // Refresh the list to show updated status
+            dispatch(fetchPurchaseRequests());
+            setRejectDialogOpen(false);
+        } catch (error) {
+            toast({
+                title: "Rejection Failed",
+                description: "Failed to reject the request. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsProcessing(false);
+            setPendingActionRequest(null);
         }
     };
 
@@ -85,10 +161,39 @@ export default function ApprovalsPage() {
             cell: ({ row }) => <StatusBadge status={row.getValue('status')} />,
         },
         {
+            id: 'my_decision',
+            header: 'My Decision',
+            cell: ({ row }) => {
+                const request = row.original;
+                const userAction = hasUserActed(request);
+
+                if (userAction.acted) {
+                    return (
+                        <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted text-sm w-fit">
+                            {userAction.approved ? (
+                                <>
+                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                    <span className="text-green-600 font-medium">Approved</span>
+                                </>
+                            ) : (
+                                <>
+                                    <XCircle className="h-4 w-4 text-destructive" />
+                                    <span className="text-destructive font-medium">Rejected</span>
+                                </>
+                            )}
+                        </div>
+                    );
+                }
+                return <span className="text-muted-foreground pl-2">-</span>;
+            },
+        },
+        {
             id: 'actions',
             header: 'Actions',
             cell: ({ row }) => {
                 const request = row.original;
+                const userAction = hasUserActed(request);
+
                 return (
                     <div className="flex items-center gap-1">
                         <Button
@@ -103,24 +208,28 @@ export default function ApprovalsPage() {
                         >
                             <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleApprove(request.id)}
-                            className="h-8 w-8 p-0 hover:text-green-600"
-                            title="Approve"
-                        >
-                            <CheckCircle className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleReject(request.id)}
-                            className="h-8 w-8 p-0 hover:text-destructive"
-                            title="Reject"
-                        >
-                            <XCircle className="h-4 w-4" />
-                        </Button>
+                        {!userAction.acted && (
+                            <>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleApprove(request)}
+                                    className="h-8 w-8 p-0 hover:text-green-600"
+                                    title="Approve"
+                                >
+                                    <CheckCircle className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleReject(request)}
+                                    className="h-8 w-8 p-0 hover:text-destructive"
+                                    title="Reject"
+                                >
+                                    <XCircle className="h-4 w-4" />
+                                </Button>
+                            </>
+                        )}
                     </div>
                 );
             },
@@ -140,19 +249,19 @@ export default function ApprovalsPage() {
                         </p>
                     </div>
 
-                    {pendingRequests.length === 0 && !isLoading ? (
+                    {relevantRequests.length === 0 && !isLoading ? (
                         <Card>
                             <CardContent className="pt-6">
                                 <div className="text-center text-muted-foreground py-8">
                                     <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                                    <p>No pending requests to review</p>
+                                    <p>No requests to review</p>
                                 </div>
                             </CardContent>
                         </Card>
                     ) : (
                         <DataTable
                             columns={columns}
-                            data={pendingRequests}
+                            data={relevantRequests}
                             isLoading={isLoading}
                             searchPlaceholder="Search requests..."
                         />
@@ -191,30 +300,57 @@ export default function ApprovalsPage() {
                                     </div>
 
                                     <div className="flex justify-end gap-2 pt-4 border-t">
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => {
-                                                handleReject(selectedRequest.id);
-                                                setIsDialogOpen(false);
-                                            }}
-                                        >
-                                            <XCircle className="h-4 w-4 mr-2" />
-                                            Reject
-                                        </Button>
-                                        <Button
-                                            onClick={() => {
-                                                handleApprove(selectedRequest.id);
-                                                setIsDialogOpen(false);
-                                            }}
-                                        >
-                                            <CheckCircle className="h-4 w-4 mr-2" />
-                                            Approve
-                                        </Button>
+                                        {!hasUserActed(selectedRequest).acted && (
+                                            <>
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        handleReject(selectedRequest);
+                                                        setIsDialogOpen(false);
+                                                    }}
+                                                >
+                                                    <XCircle className="h-4 w-4 mr-2" />
+                                                    Reject
+                                                </Button>
+                                                <Button
+                                                    onClick={() => {
+                                                        handleApprove(selectedRequest);
+                                                        setIsDialogOpen(false);
+                                                    }}
+                                                >
+                                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                                    Approve
+                                                </Button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             )}
                         </DialogContent>
                     </Dialog>
+
+                    <ConfirmationDialog
+                        open={approveConfirmOpen}
+                        onOpenChange={setApproveConfirmOpen}
+                        title="Approve Request"
+                        description={`Are you sure you want to approve "${pendingActionRequest?.title}"?`}
+                        confirmText="Approve"
+                        onConfirm={confirmApprove}
+                        isLoading={isProcessing}
+                    />
+
+                    <InputDialog
+                        open={rejectDialogOpen}
+                        onOpenChange={setRejectDialogOpen}
+                        title="Reject Request"
+                        description={`Please provide a reason for rejecting "${pendingActionRequest?.title}"`}
+                        label="Rejection Reason"
+                        placeholder="Enter your reason for rejection..."
+                        confirmText="Reject"
+                        onConfirm={confirmReject}
+                        required={true}
+                        isLoading={isProcessing}
+                    />
                 </div>
             </main>
         </div>

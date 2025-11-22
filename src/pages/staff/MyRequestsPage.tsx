@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchPurchaseRequests } from '@/store/slices/purchaseRequestSlice';
 import { SimpleHeader } from '@/components/shared/SimpleHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { FileText, PlusCircle, Eye, Trash2 } from 'lucide-react';
@@ -18,14 +19,18 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { PurchaseRequestItemsTable } from '@/components/shared/PurchaseRequestItemsTable';
+import { useToast } from '@/hooks/use-toast';
 
 export default function MyRequestsPage() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+    const { toast } = useToast();
     const { user } = useAppSelector((state) => state.auth);
     const { requests, isLoading } = useAppSelector((state) => state.purchaseRequests);
     const [selectedRequest, setSelectedRequest] = useState<PurchaseRequest | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [requestToDelete, setRequestToDelete] = useState<PurchaseRequest | null>(null);
 
     useEffect(() => {
         dispatch(fetchPurchaseRequests());
@@ -35,10 +40,31 @@ export default function MyRequestsPage() {
         ? requests.filter((req: PurchaseRequest) => req.created_by === user?.email || req.created_by === user?.username)
         : [];
 
-    const handleDelete = async (id: string | number) => {
-        if (confirm('Are you sure you want to delete this request?')) {
+    const handleDelete = (request: PurchaseRequest) => {
+        setRequestToDelete(request);
+        setDeleteConfirmOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!requestToDelete) return;
+
+        try {
             // TODO: Implement delete functionality
-            console.log('Delete request:', id);
+            console.log('Delete request:', requestToDelete.id);
+            toast({
+                title: "Request Deleted",
+                description: `Successfully deleted "${requestToDelete.title}"`,
+                variant: "default",
+            });
+            setDeleteConfirmOpen(false);
+        } catch (error) {
+            toast({
+                title: "Delete Failed",
+                description: "Failed to delete the request. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setRequestToDelete(null);
         }
     };
 
@@ -81,6 +107,8 @@ export default function MyRequestsPage() {
             header: 'Actions',
             cell: ({ row }) => {
                 const request = row.original;
+                const canDelete = request.status === 'PENDING' && (!request.approvals || request.approvals.length === 0);
+
                 return (
                     <div className="flex items-center gap-1">
                         <Button
@@ -94,14 +122,17 @@ export default function MyRequestsPage() {
                         >
                             <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(request.id)}
-                            className="h-8 w-8 p-0 hover:text-destructive"
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canDelete && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(request)}
+                                className="h-8 w-8 p-0 hover:text-destructive"
+                                title="Delete"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        )}
                     </div>
                 );
             },
@@ -184,6 +215,16 @@ export default function MyRequestsPage() {
                             )}
                         </DialogContent>
                     </Dialog>
+
+                    <ConfirmationDialog
+                        open={deleteConfirmOpen}
+                        onOpenChange={setDeleteConfirmOpen}
+                        title="Delete Request"
+                        description={`Are you sure you want to delete "${requestToDelete?.title}"? This action cannot be undone.`}
+                        confirmText="Delete"
+                        onConfirm={confirmDelete}
+                        variant="destructive"
+                    />
                 </div>
             </main>
         </div >

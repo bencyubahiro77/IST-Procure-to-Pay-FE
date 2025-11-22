@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, ArrowLeft } from 'lucide-react';
 import type { PurchaseRequestItem } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CreateRequestPage() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+    const { toast } = useToast();
     const { isLoading } = useAppSelector((state) => state.purchaseRequests);
 
     const [title, setTitle] = useState('');
@@ -78,21 +80,33 @@ export default function CreateRequestPage() {
             return;
         }
 
-        const result = await dispatch(createPurchaseRequest({
-            title: title.trim(),
-            description: description.trim(),
-            amount: totalAmount.toFixed(2),
-            items: items.map(item => ({
-                name: item.name,
-                qty: item.qty,
-                unit_price: String(item.unit_price)
-            })),
-            proforma: proforma,
-        }));
+        try {
+            await dispatch(createPurchaseRequest({
+                title: title.trim(),
+                description: description.trim(),
+                amount: totalAmount.toFixed(2),
+                items: items.map(item => ({
+                    name: item.name,
+                    qty: item.qty,
+                    unit_price: String(item.unit_price)
+                })),
+                proforma: proforma,
+            })).unwrap();
 
-        if (createPurchaseRequest.fulfilled.match(result)) {
+            toast({
+                title: "Request Created",
+                description: "Your purchase request has been submitted successfully.",
+                variant: "success",
+            });
+
             // Redirect to my requests page
             navigate('/my-requests');
+        } catch (error) {
+            toast({
+                title: "Submission Failed",
+                description: "Failed to create purchase request. Please try again.",
+                variant: "destructive",
+            });
         }
     };
 
