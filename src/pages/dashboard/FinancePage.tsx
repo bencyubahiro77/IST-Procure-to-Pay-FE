@@ -28,15 +28,30 @@ export default function FinancePage() {
 
     const totalAmount = approvedRequests.reduce((sum, req) => sum + Number(req.amount), 0);
 
-    const handleDownloadPO = (url: string, filename: string) => {
-        // Create a temporary anchor element to trigger the download
-        const link = document.createElement('a');
-        link.href = url;
-        link.target = '_blank';
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    const handleDownloadPO = async (url: string, filename: string) => {
+        try {
+            // Fetch the PDF as a blob to bypass CORS restrictions
+            const response = await fetch(url);
+            const blob = await response.blob();
+
+            // Create a temporary object URL from the blob
+            const blobUrl = window.URL.createObjectURL(blob);
+
+            // Create a temporary anchor element to trigger the download
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+
+            // Clean up
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Error downloading PO:', error);
+            // Fallback: open in new tab if blob download fails
+            window.open(url, '_blank');
+        }
     };
 
     return (
