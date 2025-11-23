@@ -18,6 +18,12 @@ export interface PurchaseRequestApproval {
     created_at: string;
 }
 
+export interface ReceiptValidation {
+    is_valid: boolean;
+    validated_at: string;
+    discrepancies: string[];
+}
+
 export interface PurchaseRequest {
     id: string | number;
     title: string;
@@ -32,6 +38,7 @@ export interface PurchaseRequest {
     proforma?: string | null; // URL
     purchase_order: string | null;
     receipt: string | null;
+    receipt_validation?: ReceiptValidation | null;
     items_display: PurchaseRequestItem[];
     approvals: PurchaseRequestApproval[];
 }

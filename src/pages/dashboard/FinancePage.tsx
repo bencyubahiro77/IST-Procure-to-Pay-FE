@@ -5,7 +5,15 @@ import { SimpleHeader } from '@/components/shared/SimpleHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { CheckCircle, Search, FileText, Download } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { CheckCircle, Search, FileText, Download, Info, AlertCircle, XCircle } from 'lucide-react';
 import type { PurchaseRequest } from '@/types';
 
 export default function FinancePage() {
@@ -25,7 +33,12 @@ export default function FinancePage() {
 
     const totalAmount = requests.reduce((sum, req) => sum + Number(req.amount), 0);
 
-    const handleDownloadPO = async (url: string, filename: string) => {
+    const getFileExtension = (url: string) => {
+        const extension = url.split('.').pop();
+        return extension ? `.${extension}` : '';
+    };
+
+    const handleDownloadFile = async (url: string, filename: string) => {
         try {
             // Fetch the PDF as a blob to bypass CORS restrictions
             const response = await fetch(url);
@@ -45,7 +58,7 @@ export default function FinancePage() {
             document.body.removeChild(link);
             window.URL.revokeObjectURL(blobUrl);
         } catch (error) {
-            console.error('Error downloading PO:', error);
+            console.error('Error downloading file:', error);
             // Fallback: open in new tab if blob download fails
             window.open(url, '_blank');
         }
@@ -129,15 +142,29 @@ export default function FinancePage() {
                                             <div className="flex flex-col items-end gap-2">
                                                 <StatusBadge status={request.status} />
                                                 <span className="text-lg font-semibold">${Number(request.amount).toFixed(2)}</span>
-                                                {request.purchase_order && (
-                                                    <button
-                                                        onClick={() => handleDownloadPO(request.purchase_order!, `PO_${request.id}.pdf`)}
-                                                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-3"
-                                                    >
-                                                        <Download className="mr-2 h-4 w-4" />
-                                                        Download PO
-                                                    </button>
-                                                )}
+                                                <div className="flex gap-2">
+                                                    {request.purchase_order && (
+                                                        <button
+                                                            onClick={() => handleDownloadFile(request.purchase_order!, `PO_${request.id}.pdf`)}
+                                                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-3"
+                                                        >
+                                                            <Download className="mr-2 h-4 w-4" />
+                                                            Download PO
+                                                        </button>
+                                                    )}
+                                                    {request.receipt && (
+                                                        <button
+                                                            onClick={() => {
+                                                                const ext = getFileExtension(request.receipt!);
+                                                                handleDownloadFile(request.receipt!, `Receipt_${request.id}${ext}`);
+                                                            }}
+                                                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                                                        >
+                                                            <Download className="mr-2 h-4 w-4" />
+                                                            Receipt
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </CardHeader>
@@ -148,6 +175,57 @@ export default function FinancePage() {
                                                 <div className="text-sm text-muted-foreground max-h-32 overflow-y-auto whitespace-pre-wrap border rounded-md p-2 bg-muted/20">
                                                     {request.description}
                                                 </div>
+                                            </div>
+
+                                            {/* Receipt Validation Status */}
+                                            <div className="flex items-center gap-2 mt-4">
+                                                <h4 className="text-sm font-medium">Receipt Status:</h4>
+                                                {!request.receipt ? (
+                                                    <div className="flex items-center text-muted-foreground text-sm bg-muted px-2 py-1 rounded-full">
+                                                        <AlertCircle className="h-4 w-4 mr-1" />
+                                                        Not Submitted
+                                                    </div>
+                                                ) : request.receipt_validation?.is_valid ? (
+                                                    <div className="flex items-center text-green-600 text-sm bg-green-50 px-2 py-1 rounded-full border border-green-200">
+                                                        <CheckCircle className="h-4 w-4 mr-1" />
+                                                        Valid
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex items-center text-red-600 text-sm bg-red-50 px-2 py-1 rounded-full border border-red-200">
+                                                            <XCircle className="h-4 w-4 mr-1" />
+                                                            Flagged
+                                                        </div>
+                                                        {request.receipt_validation?.discrepancies && request.receipt_validation.discrepancies.length > 0 && (
+                                                            <Dialog>
+                                                                <DialogTrigger asChild>
+                                                                    <button className="text-muted-foreground hover:text-foreground transition-colors">
+                                                                        <Info className="h-5 w-5 text-red-500" />
+                                                                    </button>
+                                                                </DialogTrigger>
+                                                                <DialogContent>
+                                                                    <DialogHeader>
+                                                                        <DialogTitle className="flex items-center gap-2 text-red-600">
+                                                                            <AlertCircle className="h-5 w-5" />
+                                                                            Receipt Discrepancies
+                                                                        </DialogTitle>
+                                                                        <DialogDescription>
+                                                                            The following discrepancies were found between the receipt and the purchase order.
+                                                                        </DialogDescription>
+                                                                    </DialogHeader>
+                                                                    <div className="mt-4 space-y-2">
+                                                                        {request.receipt_validation.discrepancies.map((discrepancy, index) => (
+                                                                            <div key={index} className="flex items-start gap-2 text-sm p-3 bg-red-50 rounded-md border border-red-100 text-red-900">
+                                                                                <span className="font-bold min-w-[20px]">{index + 1}.</span>
+                                                                                <span>{discrepancy}</span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </DialogContent>
+                                                            </Dialog>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {request.approvals && request.approvals.length > 0 && (

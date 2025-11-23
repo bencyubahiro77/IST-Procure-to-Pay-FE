@@ -77,7 +77,21 @@ export default function MyRequestsPage() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setReceiptFile(e.target.files[0]);
+            const file = e.target.files[0];
+            const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+
+            if (!validTypes.includes(file.type)) {
+                toast({
+                    title: "Invalid File Type",
+                    description: "Please upload a PDF or an image file (JPEG, PNG, WEBP).",
+                    variant: "destructive",
+                });
+                e.target.value = ''; // Reset input
+                setReceiptFile(null);
+                return;
+            }
+
+            setReceiptFile(file);
         }
     };
 
