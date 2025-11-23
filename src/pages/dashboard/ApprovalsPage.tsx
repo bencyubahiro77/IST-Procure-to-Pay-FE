@@ -75,8 +75,8 @@ export default function ApprovalsPage() {
                 description: `Successfully approved "${pendingActionRequest.title}"`,
                 variant: "success",
             });
-            // Refresh the list to show updated status
-            dispatch(fetchPurchaseRequests());
+            // Refresh the list after successful approval
+            await dispatch(fetchPurchaseRequests());
             setApproveConfirmOpen(false);
         } catch (error) {
             toast({
@@ -106,8 +106,8 @@ export default function ApprovalsPage() {
                 description: `Successfully rejected "${pendingActionRequest.title}"`,
                 variant: "default",
             });
-            // Refresh the list to show updated status
-            dispatch(fetchPurchaseRequests());
+            // Refresh the list after successful rejection
+            await dispatch(fetchPurchaseRequests());
             setRejectDialogOpen(false);
         } catch (error) {
             toast({

@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import type { PurchaseRequestState} from '@/types';
+import type { PurchaseRequestState } from '@/types';
 import {
     createPurchaseRequest,
     fetchPurchaseRequests,
@@ -17,16 +17,6 @@ const initialState: PurchaseRequestState = {
     error: null,
     total: 0,
     lastFetched: null,
-};
-
-export {
-    createPurchaseRequest,
-    fetchPurchaseRequests,
-    fetchPurchaseRequestById,
-    updatePurchaseRequest,
-    approvePurchaseRequest,
-    rejectPurchaseRequest,
-    submitReceipt,
 };
 
 const purchaseRequestSlice = createSlice({
@@ -176,4 +166,13 @@ const purchaseRequestSlice = createSlice({
 });
 
 export const { clearError, clearCurrentRequest } = purchaseRequestSlice.actions;
+export {
+    createPurchaseRequest,
+    fetchPurchaseRequests,
+    fetchPurchaseRequestById,
+    updatePurchaseRequest,
+    approvePurchaseRequest,
+    rejectPurchaseRequest,
+    submitReceipt,
+};
 export default purchaseRequestSlice.reducer;

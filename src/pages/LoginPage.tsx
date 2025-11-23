@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { login } from '@/store/slices/authSlice';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardDescription, CardTitle } from '@/components/ui/card';
+import { FormField } from '@/components/shared/FormField';
 import { Wallet } from 'lucide-react';
 import DarkMode from '@/utils/darkmode';
 
@@ -63,30 +62,27 @@ export default function LoginPage() {
               )}
 
               <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    type="text"
-                    placeholder="Enter Your Username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter Your Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
+                <FormField
+                  id="username"
+                  label="Username"
+                  type="text"
+                  placeholder="Enter Your Username"
+                  value={username}
+                  onChange={setUsername}
+                  required
+                  disabled={isLoading}
+                />
+
+                <FormField
+                  id="password"
+                  label="Password"
+                  type="password"
+                  placeholder="Enter Your Password"
+                  value={password}
+                  onChange={setPassword}
+                  required
+                  disabled={isLoading}
+                />
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Logging in...' : 'Sign In'}

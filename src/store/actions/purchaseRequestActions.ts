@@ -17,6 +17,7 @@ export const createPurchaseRequest = createAsyncThunk(
         try {
             const formData = new FormData();
             formData.append('title', payload.title);
+            formData.append('vendor', payload.vendor);
             formData.append('description', payload.description);
             formData.append('amount', payload.amount);
             formData.append('items', JSON.stringify(payload.items));

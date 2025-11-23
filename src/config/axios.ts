@@ -30,18 +30,21 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Handle 401 Unauthorized errors (redirect to login)
     if (error.response?.status === 401) {
-      // Clear localStorage
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-      
-      // Redirect to login if not already there
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+      const isLoginRequest = error.config?.url?.includes('/login/');
+
+      if (!isLoginRequest) {
+        // Clear localStorage
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
+
+        // Redirect to login if not already there
+        if (!window.location.pathname.includes('/login') && window.location.pathname !== '/') {
+          window.location.href = '/';
+        }
       }
     }
-    
+
     return Promise.reject(error);
   }
 );

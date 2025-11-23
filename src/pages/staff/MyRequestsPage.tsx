@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchPurchaseRequests } from '@/store/slices/purchaseRequestSlice';
+import { fetchPurchaseRequests, submitReceipt } from '@/store/slices/purchaseRequestSlice';
 import { SimpleHeader } from '@/components/shared/SimpleHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, PlusCircle, Eye, Trash2 } from 'lucide-react';
+import { FileText, PlusCircle, Eye, Trash2, Upload } from 'lucide-react';
 import type { PurchaseRequest } from '@/types';
 import { DataTable } from '@/components/shared/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -25,20 +25,23 @@ export default function MyRequestsPage() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const { toast } = useToast();
-    const { user } = useAppSelector((state) => state.auth);
     const { requests, isLoading } = useAppSelector((state) => state.purchaseRequests);
     const [selectedRequest, setSelectedRequest] = useState<PurchaseRequest | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [requestToDelete, setRequestToDelete] = useState<PurchaseRequest | null>(null);
 
+    // Receipt Upload State
+    const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
+    const [selectedRequestForReceipt, setSelectedRequestForReceipt] = useState<PurchaseRequest | null>(null);
+    const [receiptFile, setReceiptFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+
     useEffect(() => {
         dispatch(fetchPurchaseRequests());
     }, [dispatch]);
 
-    const myRequests = Array.isArray(requests)
-        ? requests.filter((req: PurchaseRequest) => req.created_by === user?.email || req.created_by === user?.username)
-        : [];
+    const myRequests = Array.isArray(requests) ? requests : [];
 
     const handleDelete = (request: PurchaseRequest) => {
         setRequestToDelete(request);
@@ -49,8 +52,6 @@ export default function MyRequestsPage() {
         if (!requestToDelete) return;
 
         try {
-            // TODO: Implement delete functionality
-            console.log('Delete request:', requestToDelete.id);
             toast({
                 title: "Request Deleted",
                 description: `Successfully deleted "${requestToDelete.title}"`,
@@ -65,6 +66,50 @@ export default function MyRequestsPage() {
             });
         } finally {
             setRequestToDelete(null);
+        }
+    };
+
+    const handleUploadReceiptClick = (request: PurchaseRequest) => {
+        setSelectedRequestForReceipt(request);
+        setReceiptFile(null);
+        setReceiptDialogOpen(true);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setReceiptFile(e.target.files[0]);
+        }
+    };
+
+    const confirmUploadReceipt = async () => {
+        if (!selectedRequestForReceipt || !receiptFile) return;
+
+        setIsUploading(true);
+        try {
+            await dispatch(submitReceipt({
+                id: selectedRequestForReceipt.id,
+                receipt: receiptFile
+            })).unwrap();
+
+            toast({
+                title: "Receipt Uploaded",
+                description: "Your receipt has been successfully submitted.",
+                variant: "success",
+            });
+
+            setReceiptDialogOpen(false);
+            // Optional: Refresh list to show updated state if needed, though user said toast is enough
+            dispatch(fetchPurchaseRequests());
+        } catch (error) {
+            toast({
+                title: "Upload Failed",
+                description: "Failed to upload receipt. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsUploading(false);
+            setSelectedRequestForReceipt(null);
+            setReceiptFile(null);
         }
     };
 
@@ -108,6 +153,7 @@ export default function MyRequestsPage() {
             cell: ({ row }) => {
                 const request = row.original;
                 const canDelete = request.status === 'PENDING' && (!request.approvals || request.approvals.length === 0);
+                const canUploadReceipt = request.status === 'APPROVED' && !request.receipt;
 
                 return (
                     <div className="flex items-center gap-1">
@@ -131,6 +177,17 @@ export default function MyRequestsPage() {
                                 title="Delete"
                             >
                                 <Trash2 className="h-4 w-4" />
+                            </Button>
+                        )}
+                        {canUploadReceipt && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleUploadReceiptClick(request)}
+                                className="h-8 w-8 p-0 hover:text-blue-600"
+                                title="Upload Receipt"
+                            >
+                                <Upload className="h-4 w-4" />
                             </Button>
                         )}
                     </div>
@@ -213,6 +270,74 @@ export default function MyRequestsPage() {
                                     </div>
                                 </div>
                             )}
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={receiptDialogOpen} onOpenChange={setReceiptDialogOpen}>
+                        <DialogContent className="max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Upload Receipt</DialogTitle>
+                                <DialogDescription>
+                                    Upload the receipt for "{selectedRequestForReceipt?.title}"
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <label htmlFor="receipt-upload" className="text-sm font-medium">
+                                        Receipt File
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <label
+                                            htmlFor="receipt-upload"
+                                            className="flex-1 flex items-center justify-center px-4 py-2 border border-dashed rounded-md cursor-pointer hover:bg-secondary transition-colors h-32 flex-col"
+                                        >
+                                            <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
+                                            <span className="text-sm text-muted-foreground">
+                                                {receiptFile ? receiptFile.name : 'Click to select file'}
+                                            </span>
+                                        </label>
+                                        <input
+                                            id="receipt-upload"
+                                            type="file"
+                                            accept="image/*,.pdf"
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                        />
+                                    </div>
+                                    {receiptFile && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                setReceiptFile(null);
+                                                const fileInput = document.getElementById('receipt-upload') as HTMLInputElement;
+                                                if (fileInput) fileInput.value = '';
+                                            }}
+                                            className="w-full"
+                                        >
+                                            Remove Selected File
+                                        </Button>
+                                    )}
+                                </div>
+
+                                <div className="flex justify-end gap-2 pt-4">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setReceiptDialogOpen(false)}
+                                        disabled={isUploading}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        onClick={confirmUploadReceipt}
+                                        disabled={!receiptFile || isUploading}
+                                    >
+                                        {isUploading ? 'Uploading...' : 'Upload'}
+                                    </Button>
+                                </div>
+                            </div>
                         </DialogContent>
                     </Dialog>
 

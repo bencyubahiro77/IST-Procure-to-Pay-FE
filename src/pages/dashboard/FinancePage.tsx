@@ -17,16 +17,13 @@ export default function FinancePage() {
         dispatch(fetchPurchaseRequests());
     }, [dispatch]);
 
-    // Only show APPROVED requests for Finance
-    const approvedRequests = requests.filter((req: PurchaseRequest) => req.status === 'APPROVED');
-
-    const filteredRequests = approvedRequests.filter((req: PurchaseRequest) => {
+    const filteredRequests = requests.filter((req: PurchaseRequest) => {
         const matchesSearch = req.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             req.created_by.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesSearch;
     });
 
-    const totalAmount = approvedRequests.reduce((sum, req) => sum + Number(req.amount), 0);
+    const totalAmount = requests.reduce((sum, req) => sum + Number(req.amount), 0);
 
     const handleDownloadPO = async (url: string, filename: string) => {
         try {
@@ -75,7 +72,7 @@ export default function FinancePage() {
                                 <CheckCircle className="h-4 w-4 text-green-600" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">{approvedRequests.length}</div>
+                                <div className="text-2xl font-bold">{requests.length}</div>
                                 <p className="text-xs text-muted-foreground">Purchase requests approved</p>
                             </CardContent>
                         </Card>

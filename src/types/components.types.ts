@@ -21,7 +21,7 @@ export interface GenericFormDialogProps {
 export interface FormFieldProps {
   id: string;
   label: string;
-  type?: 'text' | 'email' | 'number' | 'date' | 'tel' | 'select';
+  type?: 'text' | 'email' | 'password' | 'number' | 'date' | 'tel' | 'select';
   value: string | number;
   onChange: (value: any) => void;
   error?: string;

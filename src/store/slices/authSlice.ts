@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { User, AuthState } from '@/types';
-import { login,logout, checkAuth } from '@/store/actions/authActions';
+import { login, logout, checkAuth } from '@/store/actions/authActions';
 
 // Initialize state from localStorage if available
 const getInitialState = (): AuthState => {
@@ -88,8 +88,11 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
         state.error = null;
-        // Clear localStorage
-        localStorage.clear()
+        // Clear only auth-related localStorage items (preserve theme)
+        localStorage.removeItem('user');
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('access');
+        localStorage.removeItem('refresh');
       });
   },
 });

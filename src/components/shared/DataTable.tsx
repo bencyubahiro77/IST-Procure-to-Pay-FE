@@ -64,11 +64,11 @@ export function DataTable<TData>({
   });
 
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-white dark:bg-[#0a1628] rounded-lg shadow dark:shadow-none dark:border dark:border-border">
       {/* Search Bar */}
-      <div className="p-4 border-b">
+      <div className="p-4 border-b dark:border-border">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
           <Input
             placeholder={searchPlaceholder}
             value={globalFilter ?? ''}
@@ -83,9 +83,9 @@ export function DataTable<TData>({
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="bg-[hsl(var(--table-header))] dark:bg-[#0d1b2a] border-b dark:border-border">
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className={(header.column.columnDef.meta as any)?.className}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
@@ -103,9 +103,9 @@ export function DataTable<TData>({
               </TableRow>
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} className="border-b dark:border-border hover:bg-secondary/50 transition-colors">
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className={(cell.column.columnDef.meta as any)?.className}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -123,8 +123,8 @@ export function DataTable<TData>({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between px-4 py-4 border-t">
-        <div className="text-sm text-gray-700">
+      <div className="flex items-center justify-between px-4 py-4 border-t dark:border-border">
+        <div className="text-sm text-gray-700 dark:text-gray-300">
           Showing{' '}
           {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
           {Math.min(

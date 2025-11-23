@@ -38,7 +38,8 @@ export const login = createAsyncThunk(
 
       return { access, refresh, user };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.detail || 'Login failed');
+      // Always return a generic error message for security
+      return rejectWithValue('Incorrect username or password');
     }
   }
 );
@@ -54,8 +55,11 @@ export const checkAuth = createAsyncThunk(
       const isAuthenticated = localStorage.getItem('isAuthenticated');
 
       if (!token || !userStr || isAuthenticated !== 'true') {
-        // Clear localStorage if any required item is missing
-        localStorage.clear()
+        // Clear auth items if any required item is missing
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('isAuthenticated');
         return rejectWithValue('Not authenticated');
       }
 
@@ -84,8 +88,11 @@ export const checkAuth = createAsyncThunk(
         return rejectWithValue('Session expired');
       }
     } catch (error) {
-      // Clear localStorage on any error
-      localStorage.clear()
+      // Clear auth items on any error
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('isAuthenticated');
       return rejectWithValue('Not authenticated');
     }
   }
@@ -96,8 +103,11 @@ export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      // Clear localStorage
-      localStorage.clear();
+      // Clear only auth-related localStorage
+      localStorage.removeItem('user');
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
       return null;
     } catch (error: any) {
       return rejectWithValue(error.message);

@@ -7,7 +7,7 @@ import { FormField } from '@/components/shared/FormField';
 import { GenericFormDialog } from '@/components/shared/GenericFormDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import type { PurchaseRequestItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,7 +21,6 @@ export default function CreateRequestPage() {
     const [vendor, setVendor] = useState('');
     const [description, setDescription] = useState('');
     const [items, setItems] = useState<PurchaseRequestItem[]>([]);
-    const [proforma, setProforma] = useState<File | null>(null);
 
     const [itemDialogOpen, setItemDialogOpen] = useState(false);
     const [itemName, setItemName] = useState('');
@@ -68,11 +67,6 @@ export default function CreateRequestPage() {
         setItems((prev) => prev.filter((item) => item.id !== id));
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            setProforma(e.target.files[0]);
-        }
-    };
 
     const handleSubmitRequest = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -92,7 +86,6 @@ export default function CreateRequestPage() {
                     qty: item.qty,
                     unit_price: String(item.unit_price)
                 })),
-                proforma: proforma,
             })).unwrap();
 
             toast({
@@ -167,42 +160,6 @@ export default function CreateRequestPage() {
                                     onChange={setDescription}
                                     placeholder="Describe what you are purchasing and why"
                                 />
-
-                                <div className="space-y-2">
-                                    <label htmlFor="proforma-upload" className="text-sm font-medium">
-                                        Proforma Invoice (Optional)
-                                    </label>
-                                    <div className="flex items-center gap-2">
-                                        <label
-                                            htmlFor="proforma-upload"
-                                            className="flex-1 flex items-center justify-center px-4 py-2 border border-dashed rounded-md cursor-pointer hover:bg-secondary transition-colors"
-                                        >
-                                            <Upload className="h-4 w-4 mr-2" />
-                                            {proforma ? proforma.name : 'Choose file'}
-                                        </label>
-                                        <input
-                                            id="proforma-upload"
-                                            type="file"
-                                            accept=".pdf,.jpg,.jpeg,.png"
-                                            onChange={handleFileChange}
-                                            className="hidden"
-                                        />
-                                        {proforma && (
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setProforma(null);
-                                                    const fileInput = document.getElementById('proforma-upload') as HTMLInputElement;
-                                                    if (fileInput) fileInput.value = '';
-                                                }}
-                                            >
-                                                Remove
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
 
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
