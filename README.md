@@ -1,4 +1,4 @@
-# IST Procure-to-Pay Frontend
+# Procure-to-Pay Frontend
 
 A modern, responsive React application for managing the complete procure-to-pay cycle with role-based workflows, automated purchase order generation, and AI-powered receipt validation.
 
@@ -39,7 +39,7 @@ A modern, responsive React application for managing the complete procure-to-pay 
 
 1. Clone the repository
 ```bash
-git clone https://github.com/bencyubahiro77/IST-Procure-to-Pay-FE.git
+git clone https://github.com/bencyubahiro77/Procure-to-Pay-FE.git
 cd FE
 ```
 
@@ -295,7 +295,7 @@ The frontend integrates with the Django backend API. Ensure the backend is runni
 
 ## License
 
-This project is part of the IST Procure-to-Pay application suite.
+This project is part of the Procure-to-Pay application suite.
 
 ## Author
 
