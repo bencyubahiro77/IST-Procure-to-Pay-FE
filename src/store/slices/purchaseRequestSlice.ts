@@ -8,6 +8,7 @@ import {
     approvePurchaseRequest,
     rejectPurchaseRequest,
     submitReceipt,
+    deletePurchaseRequest,
 } from '@/store/actions/purchaseRequestActions';
 
 const initialState: PurchaseRequestState = {
@@ -103,11 +104,11 @@ const purchaseRequestSlice = createSlice({
         // Approve purchase request
         builder
             .addCase(approvePurchaseRequest.pending, (state) => {
-                state.isLoading = true;
+                // Don't set isLoading here - let the component handle approval loading state
                 state.error = null;
             })
             .addCase(approvePurchaseRequest.fulfilled, (state, action) => {
-                state.isLoading = false;
+                // Don't set isLoading here - the refetch will handle table loading
                 const index = state.requests.findIndex((req) => req.id === action.payload.id);
                 if (index !== -1) {
                     state.requests[index] = action.payload;
@@ -117,18 +118,17 @@ const purchaseRequestSlice = createSlice({
                 }
             })
             .addCase(approvePurchaseRequest.rejected, (state, action) => {
-                state.isLoading = false;
                 state.error = action.payload as string;
             });
 
         // Reject purchase request
         builder
             .addCase(rejectPurchaseRequest.pending, (state) => {
-                state.isLoading = true;
+                // Don't set isLoading here - let the component handle rejection loading state
                 state.error = null;
             })
             .addCase(rejectPurchaseRequest.fulfilled, (state, action) => {
-                state.isLoading = false;
+                // Don't set isLoading here - the refetch will handle table loading
                 const index = state.requests.findIndex((req) => req.id === action.payload.id);
                 if (index !== -1) {
                     state.requests[index] = action.payload;
@@ -138,7 +138,6 @@ const purchaseRequestSlice = createSlice({
                 }
             })
             .addCase(rejectPurchaseRequest.rejected, (state, action) => {
-                state.isLoading = false;
                 state.error = action.payload as string;
             });
 
@@ -162,6 +161,19 @@ const purchaseRequestSlice = createSlice({
                 state.isLoading = false;
                 state.error = action.payload as string;
             });
+
+        // Delete purchase request
+        builder
+            .addCase(deletePurchaseRequest.pending, (state) => {
+                state.error = null;
+            })
+            .addCase(deletePurchaseRequest.fulfilled, (state, action) => {
+                state.requests = state.requests.filter((req) => req.id !== action.payload);
+                state.total -= 1;
+            })
+            .addCase(deletePurchaseRequest.rejected, (state, action) => {
+                state.error = action.payload as string;
+            });
     },
 });
 
@@ -174,5 +186,6 @@ export {
     approvePurchaseRequest,
     rejectPurchaseRequest,
     submitReceipt,
+    deletePurchaseRequest,
 };
 export default purchaseRequestSlice.reducer;

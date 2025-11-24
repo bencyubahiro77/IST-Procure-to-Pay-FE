@@ -6,7 +6,6 @@ import { SimpleHeader } from '@/components/shared/SimpleHeader';
 import { FormField } from '@/components/shared/FormField';
 import { GenericFormDialog } from '@/components/shared/GenericFormDialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import type { PurchaseRequestItem } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -109,132 +108,127 @@ export default function CreateRequestPage() {
         <div className="min-h-screen bg-background">
             <SimpleHeader />
 
-            <main className="container mx-auto p-4 md:p-6 max-w-3xl">
+            <main className="container mx-auto p-4 md:p-8 max-w-7xl">
                 <div className="space-y-6">
-                    <div className="flex items-center gap-4">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate('/my-requests')}
-                        >
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                            Back to My Requests
-                        </Button>
-                    </div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate('/my-requests')}
+                        className="-ml-2 mb-2"
+                    >
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back to My Requests
+                    </Button>
 
-                    <div>
+                    {/* Page Header */}
+                    <div className="mb-8">
                         <h2 className="text-3xl font-bold tracking-tight">Create Purchase Request</h2>
                         <p className="text-muted-foreground mt-1">
                             Fill out the form below to submit a new purchase request
                         </p>
                     </div>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Request Details</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleSubmitRequest} className="space-y-4">
-                                <FormField
-                                    id="title"
-                                    label="Title"
-                                    value={title}
-                                    onChange={setTitle}
-                                    placeholder="Enter purchase request title"
-                                    required
-                                />
+                    <form onSubmit={handleSubmitRequest} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
+                                id="title"
+                                label="Title"
+                                value={title}
+                                onChange={setTitle}
+                                placeholder="Enter purchase request title"
+                                required
+                            />
 
-                                <FormField
-                                    id="vendor"
-                                    label="Vendor"
-                                    value={vendor}
-                                    onChange={setVendor}
-                                    placeholder="Enter vendor name"
-                                    required
-                                />
+                            <FormField
+                                id="vendor"
+                                label="Vendor"
+                                value={vendor}
+                                onChange={setVendor}
+                                placeholder="Enter vendor name"
+                                required
+                            />
+                        </div>
 
-                                <FormField
-                                    id="description"
-                                    label="Description"
-                                    value={description}
-                                    onChange={setDescription}
-                                    placeholder="Describe what you are purchasing and why"
-                                />
+                        <FormField
+                            id="description"
+                            label="Description"
+                            value={description}
+                            onChange={setDescription}
+                            placeholder="Describe what you are purchasing and why"
+                        />
 
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-medium">Items</h3>
-                                        <Button type="button" size="sm" onClick={() => setItemDialogOpen(true)}>
-                                            Add Item
-                                        </Button>
-                                    </div>
-
-                                    <div className="border rounded-lg overflow-hidden">
-                                        {items.length === 0 ? (
-                                            <div className="p-4 text-sm text-muted-foreground text-center">
-                                                No items added yet. Click "Add Item" to start.
-                                            </div>
-                                        ) : (
-                                            <table className="w-full text-sm">
-                                                <thead className="bg-muted">
-                                                    <tr>
-                                                        <th className="text-left py-2 px-3">Name</th>
-                                                        <th className="text-right py-2 px-3">Qty</th>
-                                                        <th className="text-right py-2 px-3">Unit Price</th>
-                                                        <th className="text-right py-2 px-3">Total</th>
-                                                        <th className="py-2 px-3 text-right">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {items.map((item) => (
-                                                        <tr key={item.id} className="border-t">
-                                                            <td className="py-2 px-3">{item.name}</td>
-                                                            <td className="py-2 px-3 text-right">{item.qty}</td>
-                                                            <td className="py-2 px-3 text-right">
-                                                                ${Number(item.unit_price).toFixed(2)}
-                                                            </td>
-                                                            <td className="py-2 px-3 text-right">
-                                                                ${Number(item.total_price).toFixed(2)}
-                                                            </td>
-                                                            <td className="py-2 px-3 text-right">
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() => handleRemoveItem(item.id)}
-                                                                >
-                                                                    Remove
-                                                                </Button>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                                <tfoot>
-                                                    <tr className="border-t bg-muted/50">
-                                                        <td className="py-2 px-3 font-semibold" colSpan={3}>
-                                                            Total Amount
-                                                        </td>
-                                                        <td className="py-2 px-3 text-right font-semibold">
-                                                            ${totalAmount.toFixed(2)}
-                                                        </td>
-                                                        <td />
-                                                    </tr>
-                                                </tfoot>
-                                            </table>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <Button
-                                    type="submit"
-                                    className="w-full"
-                                    disabled={!title.trim() || !vendor.trim() || items.length === 0 || isLoading}
-                                >
-                                    {isLoading ? 'Submitting...' : 'Submit Purchase Request'}
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold">Items</h3>
+                                <Button type="button" size="sm" onClick={() => setItemDialogOpen(true)}>
+                                    Add Item
                                 </Button>
-                            </form>
-                        </CardContent>
-                    </Card>
+                            </div>
+
+                            <div className="border rounded-lg overflow-hidden bg-card">
+                                {items.length === 0 ? (
+                                    <div className="p-8 text-sm text-muted-foreground text-center">
+                                        No items added yet. Click "Add Item" to start.
+                                    </div>
+                                ) : (
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-muted">
+                                            <tr>
+                                                <th className="text-left py-3 px-4">Name</th>
+                                                <th className="text-right py-3 px-4">Qty</th>
+                                                <th className="text-right py-3 px-4">Unit Price</th>
+                                                <th className="text-right py-3 px-4">Total</th>
+                                                <th className="py-3 px-4 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {items.map((item) => (
+                                                <tr key={item.id} className="border-t">
+                                                    <td className="py-3 px-4">{item.name}</td>
+                                                    <td className="py-3 px-4 text-right">{item.qty}</td>
+                                                    <td className="py-3 px-4 text-right">
+                                                        RWF {Number(item.unit_price).toFixed(2)}
+                                                    </td>
+                                                    <td className="py-3 px-4 text-right">
+                                                        RWF {Number(item.total_price).toFixed(2)}
+                                                    </td>
+                                                    <td className="py-3 px-4 text-right">
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleRemoveItem(item.id)}
+                                                        >
+                                                            Remove
+                                                        </Button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr className="border-t bg-muted/50">
+                                                <td className="py-3 px-4 font-semibold" colSpan={3}>
+                                                    Total Amount
+                                                </td>
+                                                <td className="py-3 px-4 text-right font-semibold text-lg">
+                                                    RWF {totalAmount.toFixed(2)}
+                                                </td>
+                                                <td />
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                )}
+                            </div>
+                        </div>
+
+                        <Button
+                            type="submit"
+                            className="w-full"
+                            disabled={!title.trim() || !vendor.trim() || items.length === 0 || isLoading}
+                        >
+                            {isLoading ? 'Submitting...' : 'Submit Purchase Request'}
+                        </Button>
+                    </form>
                 </div>
 
                 <GenericFormDialog

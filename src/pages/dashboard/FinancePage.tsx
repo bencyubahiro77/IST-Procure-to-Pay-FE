@@ -5,6 +5,7 @@ import { SimpleHeader } from '@/components/shared/SimpleHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
     Dialog,
     DialogContent,
@@ -59,7 +60,6 @@ export default function FinancePage() {
             window.URL.revokeObjectURL(blobUrl);
         } catch (error) {
             console.error('Error downloading file:', error);
-            // Fallback: open in new tab if blob download fails
             window.open(url, '_blank');
         }
     };
@@ -79,27 +79,55 @@ export default function FinancePage() {
 
                     {/* Summary Cards */}
                     <div className="grid gap-4 md:grid-cols-2">
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total Approved</CardTitle>
-                                <CheckCircle className="h-4 w-4 text-green-600" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{requests.length}</div>
-                                <p className="text-xs text-muted-foreground">Purchase requests approved</p>
-                            </CardContent>
-                        </Card>
+                        {isLoading ? (
+                            <>
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <Skeleton className="h-4 w-28" />
+                                        <Skeleton className="h-4 w-4 rounded-full" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <Skeleton className="h-7 w-16 mb-2" />
+                                        <Skeleton className="h-3 w-40" />
+                                    </CardContent>
+                                </Card>
 
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
-                                <FileText className="h-4 w-4 text-blue-600" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">${totalAmount.toFixed(2)}</div>
-                                <p className="text-xs text-muted-foreground">From approved requests</p>
-                            </CardContent>
-                        </Card>
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <Skeleton className="h-4 w-28" />
+                                        <Skeleton className="h-4 w-4 rounded-full" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <Skeleton className="h-7 w-24 mb-2" />
+                                        <Skeleton className="h-3 w-36" />
+                                    </CardContent>
+                                </Card>
+                            </>
+                        ) : (
+                            <>
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Total Approved</CardTitle>
+                                        <CheckCircle className="h-4 w-4 text-green-600" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold">{requests.length}</div>
+                                        <p className="text-xs text-muted-foreground">Purchase requests approved</p>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
+                                        <FileText className="h-4 w-4 text-blue-600" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold">RWF {totalAmount.toFixed(2)}</div>
+                                        <p className="text-xs text-muted-foreground">From approved requests</p>
+                                    </CardContent>
+                                </Card>
+                            </>
+                        )}
                     </div>
 
                     {/* Search */}
@@ -113,7 +141,6 @@ export default function FinancePage() {
                         />
                     </div>
 
-                    {/* Requests List */}
                     {isLoading ? (
                         <div className="flex items-center justify-center py-12">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -141,7 +168,7 @@ export default function FinancePage() {
                                             </div>
                                             <div className="flex flex-col items-end gap-2">
                                                 <StatusBadge status={request.status} />
-                                                <span className="text-lg font-semibold">${Number(request.amount).toFixed(2)}</span>
+                                                <span className="text-lg font-semibold">RWF {Number(request.amount).toFixed(2)}</span>
                                                 <div className="flex gap-2">
                                                     {request.purchase_order && (
                                                         <button

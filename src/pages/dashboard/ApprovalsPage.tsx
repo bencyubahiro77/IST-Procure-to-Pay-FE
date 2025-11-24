@@ -39,7 +39,6 @@ export default function ApprovalsPage() {
 
     // Helper to check if current user has already acted on this request
     const hasUserActed = (request: PurchaseRequest): { acted: boolean; approved?: boolean } => {
-        // Check both username and email to be safe, as backend might store either
         const username = user?.username;
         const email = user?.email;
 
@@ -53,7 +52,6 @@ export default function ApprovalsPage() {
         return { acted: false };
     };
 
-    // Show requests that are PENDING (needing action) OR requests the user has already acted on (history)
     const relevantRequests = requests.filter((req: PurchaseRequest) => {
         const userAction = hasUserActed(req);
         return req.status === 'PENDING' || userAction.acted;
@@ -70,14 +68,13 @@ export default function ApprovalsPage() {
         setIsProcessing(true);
         try {
             await dispatch(approvePurchaseRequest({ id: pendingActionRequest.id, comments: '' })).unwrap();
+            setApproveConfirmOpen(false);
             toast({
                 title: "Request Approved",
                 description: `Successfully approved "${pendingActionRequest.title}"`,
                 variant: "success",
             });
-            // Refresh the list after successful approval
             await dispatch(fetchPurchaseRequests());
-            setApproveConfirmOpen(false);
         } catch (error) {
             toast({
                 title: "Approval Failed",
@@ -101,14 +98,13 @@ export default function ApprovalsPage() {
         setIsProcessing(true);
         try {
             await dispatch(rejectPurchaseRequest({ id: pendingActionRequest.id, comments: reason })).unwrap();
+            setRejectDialogOpen(false);
             toast({
                 title: "Request Rejected",
                 description: `Successfully rejected "${pendingActionRequest.title}"`,
                 variant: "default",
             });
-            // Refresh the list after successful rejection
             await dispatch(fetchPurchaseRequests());
-            setRejectDialogOpen(false);
         } catch (error) {
             toast({
                 title: "Rejection Failed",
@@ -144,7 +140,7 @@ export default function ApprovalsPage() {
             header: 'Amount',
             cell: ({ row }) => {
                 const amount = parseFloat(row.getValue('amount'));
-                return <div className="font-medium">${amount.toFixed(2)}</div>;
+                return <div className="font-medium">RWF {amount.toFixed(2)}</div>;
             },
         },
         {
@@ -216,6 +212,7 @@ export default function ApprovalsPage() {
                                     onClick={() => handleApprove(request)}
                                     className="h-8 w-8 p-0 hover:text-green-600"
                                     title="Approve"
+                                    disabled={isProcessing}
                                 >
                                     <CheckCircle className="h-4 w-4" />
                                 </Button>
@@ -225,6 +222,7 @@ export default function ApprovalsPage() {
                                     onClick={() => handleReject(request)}
                                     className="h-8 w-8 p-0 hover:text-destructive"
                                     title="Reject"
+                                    disabled={isProcessing}
                                 >
                                     <XCircle className="h-4 w-4" />
                                 </Button>
@@ -294,7 +292,7 @@ export default function ApprovalsPage() {
                                         <div className="text-right">
                                             <span className="text-sm text-muted-foreground mr-2">Total Amount:</span>
                                             <span className="text-lg font-bold">
-                                                ${Number(selectedRequest.amount).toFixed(2)}
+                                                RWF {Number(selectedRequest.amount).toFixed(2)}
                                             </span>
                                         </div>
                                     </div>
@@ -308,6 +306,7 @@ export default function ApprovalsPage() {
                                                         handleReject(selectedRequest);
                                                         setIsDialogOpen(false);
                                                     }}
+                                                    disabled={isProcessing}
                                                 >
                                                     <XCircle className="h-4 w-4 mr-2" />
                                                     Reject
@@ -317,6 +316,7 @@ export default function ApprovalsPage() {
                                                         handleApprove(selectedRequest);
                                                         setIsDialogOpen(false);
                                                     }}
+                                                    disabled={isProcessing}
                                                 >
                                                     <CheckCircle className="h-4 w-4 mr-2" />
                                                     Approve

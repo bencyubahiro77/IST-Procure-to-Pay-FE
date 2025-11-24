@@ -1,25 +1,25 @@
-# ISTFrontend
+# IST Procure-to-Pay Frontend
 
-A modern, responsive React application for managing loans and borrowers with AI-powered insights.
+A modern, responsive React application for managing the complete procure-to-pay cycle with role-based workflows, automated purchase order generation, and AI-powered receipt validation.
 
 ## Features
 
-- **Beautiful Landing Page** - Engaging landing page with blue-themed design
-- **Secure Authentication** - OTP-based login with HttpOnly cookies for enhanced security
-- **Dashboard** - Comprehensive dashboard with sidebar navigation
-- **Borrowers Management** - Full CRUD operations with advanced table features
-- **Loans Tracking** - Manage loans with status tracking and analytics
-- **Admin Panel** - User management for administrators
-- **Responsive Design** - Mobile-first design that works on all devices
-- **Performance Optimized** - Lazy loading, code splitting, and memoization
+- **Role-Based Access Control** - Separate dashboards for Staff, Approvers (L1 & L2), and Finance users
+- **Purchase Request Management** - Full CRUD operations with multi-level approval workflow
+- **Automated PO Generation** - Automatic PDF generation upon final approval
+- **AI-Powered Receipt Validation** - Gemini AI validates receipts against purchase orders
+- **Real-Time Status Tracking** - Track requests through the entire approval pipeline
+- **Currency Support** - All monetary values displayed in RWF (Rwandan Franc)
+- **Responsive Design** - Mobile-first design that works seamlessly on all devices
+- **Performance Optimized** - Skeleton loaders, lazy loading, and efficient state management
 
 ## Tech Stack
 
 - **React 18** - Modern React with hooks
 - **TypeScript** - Type-safe development
 - **Vite** - Lightning-fast build tool
-- **Redux Toolkit** - State management
-- **React Router** - Client-side routing with lazy loading
+- **Redux Toolkit** - Centralized state management with async thunks
+- **React Router** - Client-side routing with protected routes
 - **Axios** - HTTP client with interceptors
 - **TanStack Table** - Powerful data tables with sorting, filtering, and pagination
 - **Shadcn/ui** - Beautiful, accessible UI components
@@ -39,8 +39,8 @@ A modern, responsive React application for managing loans and borrowers with AI-
 
 1. Clone the repository
 ```bash
-git clone <repository-url>
-cd ISTFE
+git clone https://github.com/bencyubahiro77/IST-Procure-to-Pay-FE.git
+cd FE
 ```
 
 2. Install dependencies
@@ -55,7 +55,7 @@ cp .env.example .env
 
 Edit `.env` and set your backend API URL:
 ```env
-VITE_API_BASE_URL=http://localhost:8000
+VITE_API_BASE_URL=https://ist-procure-to-pay.onrender.com/
 ```
 
 4. Start the development server
@@ -79,37 +79,87 @@ The optimized production build will be in the `dist` folder.
 npm run preview
 ```
 
+## Test Credentials
+
+Use these credentials to test different user roles:
+
+### Staff User
+```json
+{
+  "username": "staff_user",
+  "password": "Staff123!"
+}
+```
+**Permissions**: Create purchase requests, view own requests, upload receipts, delete pending requests
+
+### Level 1 Approver
+```json
+{
+  "username": "approver1_user",
+  "password": "password123"
+}
+```
+**Permissions**: View pending requests, approve/reject at Level 1
+
+### Level 2 Approver
+```json
+{
+  "username": "approver2_user",
+  "password": "password123"
+}
+```
+**Permissions**: View pending requests, approve/reject at Level 2, trigger PO generation
+
+### Finance User
+```json
+{
+  "username": "finance_user",
+  "password": "Finance123!"
+}
+```
+**Permissions**: View all approved requests, download POs, download receipts, view receipt validation status
+
 ## Project Structure
 
 ```
-ISTFE/
+FE/
 ├── src/
 │   ├── components/          # Reusable components
-│   │   ├── layout/         # Layout components (Dashboard, Sidebar)
-│   │   ├── ui/             # Shadcn/ui components
-│   │   └── ProtectedRoute.tsx
+│   │   ├── shared/         # Shared components
+│   │   │   ├── ConfirmationDialog.tsx
+│   │   │   ├── DataTable.tsx
+│   │   │   ├── FormField.tsx
+│   │   │   ├── InputDialog.tsx
+│   │   │   ├── PurchaseRequestItemsTable.tsx
+│   │   │   ├── SimpleHeader.tsx
+│   │   │   └── StatusBadge.tsx
+│   │   └── ui/             # Shadcn/ui components
 │   ├── config/             # Configuration files
 │   │   ├── api.ts          # API endpoints
 │   │   └── axios.ts        # Axios instance with interceptors
+│   ├── hooks/              # Custom hooks
+│   │   └── use-toast.ts    # Toast notifications hook
 │   ├── lib/                # Utility functions
 │   │   └── utils.ts        # Tailwind merge utility
 │   ├── pages/              # Page components
 │   │   ├── dashboard/      # Dashboard pages
-│   │   │   ├── BorrowersPage.tsx
-│   │   │   ├── LoansPage.tsx
-│   │   │   └── UsersPage.tsx
-│   │   ├── LandingPage.tsx
-│   │   ├── LoginPage.tsx
-│   │   └── SignupPage.tsx
+│   │   │   ├── ApprovalsPage.tsx
+│   │   │   └── FinancePage.tsx
+│   │   ├── staff/          # Staff pages
+│   │   │   ├── CreateRequestPage.tsx
+│   │   │   └── MyRequestsPage.tsx
+│   │   └── LoginPage.tsx
 │   ├── store/              # Redux store
+│   │   ├── actions/        # Async thunk actions
+│   │   │   └── purchaseRequestActions.ts
 │   │   ├── slices/         # Redux slices
 │   │   │   ├── authSlice.ts
-│   │   │   ├── borrowersSlice.ts
-│   │   │   ├── loansSlice.ts
-│   │   │   └── usersSlice.ts
+│   │   │   └── purchaseRequestSlice.ts
 │   │   ├── hooks.ts        # Typed Redux hooks
 │   │   └── index.ts        # Store configuration
 │   ├── types/              # TypeScript type definitions
+│   │   ├── auth.types.ts
+│   │   ├── purchaseRequest.types.ts
 │   │   └── index.ts
 │   ├── App.tsx             # Main app component with routing
 │   ├── main.tsx            # Application entry point
@@ -125,16 +175,52 @@ ISTFE/
 ## Key Features Implementation
 
 ### Authentication
-- HttpOnly cookies for secure token storage
-- OTP-based login flow
+- JWT tokens with refresh token mechanism
 - Protected routes with role-based access control
 - Automatic redirect on 401 errors
+- Persistent login state
+
+### Purchase Request Workflow
+
+#### 1. Staff Creates Request
+- Add title, vendor, description
+- Add multiple line items (name, quantity, unit price)
+- Automatic total calculation
+- Two-column responsive form layout
+
+#### 2. Level 1 Approval
+- Review request details
+- Approve or reject with comments
+- Track approval history
+- View all items in request
+
+#### 3. Level 2 Approval & PO Generation
+- Final approval review
+- Automatic PDF PO generation upon approval
+- PO contains vendor info, items table, and approval details
+- PO stored on Cloudinary
+
+#### 4. Receipt Submission
+- Staff uploads receipt after purchase (PDF or image)
+- File type validation (PDF, JPEG, PNG, WEBP)
+
+#### 5. AI Receipt Validation
+- Gemini AI extracts text from receipt
+- Compares against PO details
+- Flags discrepancies (amount, vendor, items)
+- Finance reviews validation results
+
+#### 6. Finance Dashboard
+- View all approved requests
+- Download POs and receipts
+- Review receipt validation status
+- Track financial data
 
 ### State Management
 - Redux Toolkit for global state
-- Async thunks for API calls
-- Proper error handling
-- Loading states
+- Async thunks for API calls with proper loading states
+- Separate loading states for buttons vs. tables
+- Optimistic UI updates with refetch
 
 ### Data Tables
 - Sorting (multi-column support)
@@ -142,60 +228,74 @@ ISTFE/
 - Column-specific filtering
 - Pagination
 - Responsive design
+- Custom action buttons per row
 
 ### Performance Optimization
+- Skeleton loaders for better UX during data fetching
+- Summary cards with loading placeholders
 - Lazy loading for routes (code splitting)
 - useMemo for expensive computations
-- Optimized re-renders
-- Efficient data fetching
+- Efficient data fetching with refetch control
 
 ### Security
-- HttpOnly cookies (not accessible via JavaScript)
-- CSRF token support
-- Secure API communication
+- JWT authentication
+- Protected API routes
+- Role-based access control
+- Secure file uploads
 - Input validation
 
-## Available Scripts
+## User Workflows
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
+### Staff User Workflow
+1. **Login** → Navigate to My Requests
+2. **Create Request** → Click "New Request"
+   - Fill in title, vendor, description
+   - Add items with quantity and price
+   - Submit request
+3. **Track Status** → View request status in table
+4. **Upload Receipt** → When approved, upload receipt
+5. **Delete Request** → Delete pending requests (before any approvals)
+
+### Approver Workflow (L1 & L2)
+1. **Login** → Navigate to Approvals Dashboard
+2. **Review Requests** → See pending requests
+3. **View Details** → Click eye icon to see full request
+4. **Approve/Reject** → 
+   - Click approve → Confirm action
+   - Click reject → Provide reason
+5. **Track Decisions** → See "My Decision" column status
+
+### Finance User Workflow
+1. **Login** → Navigate to Finance Dashboard
+2. **View Summary** → See total approved requests and amounts
+3. **Download PO** → Click "Download PO" for approved requests
+4. **Download Receipt** → Click "Receipt" button if submitted
+5. **Review Validation** → 
+   - See receipt status: Valid, Flagged, or Not Submitted
+   - Click info icon to view discrepancies if flagged
 
 ## API Integration
 
-The frontend integrates with the ISTBackend API. Ensure the backend is running before starting the frontend.
+The frontend integrates with the Django backend API. Ensure the backend is running before starting the frontend.
 
 ### API Endpoints Used
 
-- **Auth**: `/auth/req-login-otp`, `/auth/login`, `/auth/register`
-- **Users**: `/user/get-users`, `/user/update-user/:id`, `/user/delete-user/:id`
-- **Borrowers**: `/borrower/get-borrowers`, `/borrower/create-borrower`, `/borrower/delete-borrower/:id`
-- **Loans**: `/loan/get-my-loans`, `/loan/create-loan`
+#### Authentication
+- `POST /api/accounts/login/` - User login
+- `GET /api/accounts/me/` - Get current user info
 
-## User Roles
-
-### Regular User
-- Manage their own borrowers
-- Track their own loans
-- View dashboard analytics
-
-### Admin
-- All regular user permissions
-- Manage all users
-- View system-wide analytics
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+#### Purchase Requests
+- `GET /api/requests/` - Get all requests (filtered by role)
+- `POST /api/requests/` - Create new request
+- `GET /api/requests/:id/` - Get request details
+- `DELETE /api/requests/:id/` - Delete request (staff only, pending)
+- `PATCH /api/requests/:id/approve/` - Approve request
+- `PATCH /api/requests/:id/reject/` - Reject request
+- `POST /api/requests/:id/submit-receipt/` - Upload receipt
 
 ## License
 
-This project is part of the ISTapplication suite.
+This project is part of the IST Procure-to-Pay application suite.
 
 ## Author
 

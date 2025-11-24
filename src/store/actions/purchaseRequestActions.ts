@@ -121,7 +121,7 @@ export const rejectPurchaseRequest = createAsyncThunk(
 // Submit receipt for a purchase request
 export const submitReceipt = createAsyncThunk(
     'purchaseRequests/submitReceipt',
-    async (payload: SubmitReceiptPayload, { rejectWithValue }) => {
+    async (payload: SubmitReceiptPayload, { rejectWithValue, dispatch }) => {
         try {
             const formData = new FormData();
             formData.append('receipt', payload.receipt);
@@ -135,9 +135,24 @@ export const submitReceipt = createAsyncThunk(
                     },
                 }
             );
+            await dispatch(fetchPurchaseRequests());
             return response.data as PurchaseRequest;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to submit receipt');
         }
     }
 );
+
+
+export const deletePurchaseRequest = createAsyncThunk(
+    'purchaseRequests/delete',
+    async (id: string | number, { rejectWithValue }) => {
+        try {
+            await axiosInstance.delete(`${API_ENDPOINTS.PURCHASE_REQUESTS}${id}/`);
+            return id;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.detail || 'Failed to delete purchase request');
+        }
+    }
+);
+

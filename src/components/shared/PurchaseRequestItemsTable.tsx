@@ -21,9 +21,9 @@ export function PurchaseRequestItemsTable({ items }: PurchaseRequestItemsTablePr
                         <tr key={item.id || index} className="border-t">
                             <td className="py-2 px-3">{item.name}</td>
                             <td className="py-2 px-3 text-right">{item.qty}</td>
-                            <td className="py-2 px-3 text-right">${Number(item.unit_price).toFixed(2)}</td>
+                            <td className="py-2 px-3 text-right">RWF {Number(item.unit_price).toFixed(2)}</td>
                             <td className="py-2 px-3 text-right">
-                                ${item.total_price ? Number(item.total_price).toFixed(2) : '0.00'}
+                                RWF {item.total_price ? Number(item.total_price).toFixed(2) : '0.00'}
                             </td>
                         </tr>
                     ))}

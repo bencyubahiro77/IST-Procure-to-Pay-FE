@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchPurchaseRequests, submitReceipt } from '@/store/slices/purchaseRequestSlice';
+import { fetchPurchaseRequests, submitReceipt, deletePurchaseRequest } from '@/store/slices/purchaseRequestSlice';
 import { SimpleHeader } from '@/components/shared/SimpleHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
@@ -36,6 +36,7 @@ export default function MyRequestsPage() {
     const [selectedRequestForReceipt, setSelectedRequestForReceipt] = useState<PurchaseRequest | null>(null);
     const [receiptFile, setReceiptFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         dispatch(fetchPurchaseRequests());
@@ -51,13 +52,16 @@ export default function MyRequestsPage() {
     const confirmDelete = async () => {
         if (!requestToDelete) return;
 
+        setIsDeleting(true);
         try {
+            await dispatch(deletePurchaseRequest(requestToDelete.id)).unwrap();
+            setDeleteConfirmOpen(false);
             toast({
                 title: "Request Deleted",
                 description: `Successfully deleted "${requestToDelete.title}"`,
-                variant: "default",
+                variant: "success",
             });
-            setDeleteConfirmOpen(false);
+            await dispatch(fetchPurchaseRequests());
         } catch (error) {
             toast({
                 title: "Delete Failed",
@@ -65,6 +69,7 @@ export default function MyRequestsPage() {
                 variant: "destructive",
             });
         } finally {
+            setIsDeleting(false);
             setRequestToDelete(null);
         }
     };
@@ -112,7 +117,6 @@ export default function MyRequestsPage() {
             });
 
             setReceiptDialogOpen(false);
-            // Optional: Refresh list to show updated state if needed, though user said toast is enough
             dispatch(fetchPurchaseRequests());
         } catch (error) {
             toast({
@@ -363,6 +367,7 @@ export default function MyRequestsPage() {
                         confirmText="Delete"
                         onConfirm={confirmDelete}
                         variant="destructive"
+                        isLoading={isDeleting}
                     />
                 </div>
             </main>
