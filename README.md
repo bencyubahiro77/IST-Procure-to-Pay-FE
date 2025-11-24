@@ -87,7 +87,7 @@ Use these credentials to test different user roles:
 ```json
 {
   "username": "staff_user",
-  "password": "Staff123!"
+  "password": "password123"
 }
 ```
 **Permissions**: Create purchase requests, view own requests, upload receipts, delete pending requests
@@ -114,7 +114,7 @@ Use these credentials to test different user roles:
 ```json
 {
   "username": "finance_user",
-  "password": "Finance123!"
+  "password": "password123"
 }
 ```
 **Permissions**: View all approved requests, download POs, download receipts, view receipt validation status
