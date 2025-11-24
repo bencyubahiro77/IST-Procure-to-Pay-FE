@@ -136,7 +136,7 @@ export const rejectPurchaseRequest = createAsyncThunk(
 // Submit receipt for a purchase request
 export const submitReceipt = createAsyncThunk(
     'purchaseRequests/submitReceipt',
-    async (payload: SubmitReceiptPayload, { rejectWithValue, dispatch }) => {
+    async (payload: SubmitReceiptPayload, { rejectWithValue}) => {
         try {
             const formData = new FormData();
             formData.append('receipt', payload.receipt);
@@ -150,7 +150,6 @@ export const submitReceipt = createAsyncThunk(
                     },
                 }
             );
-            await dispatch(fetchPurchaseRequests(1));
             return response.data as PurchaseRequest;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to submit receipt');

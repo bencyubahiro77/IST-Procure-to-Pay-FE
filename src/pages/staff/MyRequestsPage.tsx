@@ -114,25 +114,28 @@ export default function MyRequestsPage() {
                 id: selectedRequestForReceipt.id,
                 receipt: receiptFile
             })).unwrap();
-
+            setIsUploading(false);
+            setSelectedRequestForReceipt(null);
+            setReceiptFile(null);
+            setReceiptDialogOpen(false);
             toast({
                 title: "Receipt Uploaded",
                 description: "Your receipt has been successfully submitted.",
                 variant: "success",
             });
 
-            setReceiptDialogOpen(false);
             dispatch(fetchPurchaseRequests(currentPage));
         } catch (error) {
+            // Clean up on error too
+            setIsUploading(false);
+            setSelectedRequestForReceipt(null);
+            setReceiptFile(null);
+            setReceiptDialogOpen(false);
             toast({
                 title: "Upload Failed",
                 description: "Failed to upload receipt. Please try again.",
                 variant: "destructive",
             });
-        } finally {
-            setIsUploading(false);
-            setSelectedRequestForReceipt(null);
-            setReceiptFile(null);
         }
     };
 
@@ -325,7 +328,7 @@ export default function MyRequestsPage() {
                                     <div className="flex items-center gap-2">
                                         <label
                                             htmlFor="receipt-upload"
-                                            className="flex-1 flex items-center justify-center px-4 py-2 border border-dashed rounded-md cursor-pointer hover:bg-secondary transition-colors h-32 flex-col"
+                                            className={`flex-1 flex items-center justify-center px-4 py-2 border border-dashed rounded-md cursor-pointer hover:bg-secondary transition-colors h-32 flex-col ${isUploading ? 'pointer-events-none opacity-50' : ''}`}
                                         >
                                             <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
                                             <span className="text-sm text-muted-foreground">
@@ -338,6 +341,7 @@ export default function MyRequestsPage() {
                                             accept="image/*,.pdf"
                                             onChange={handleFileChange}
                                             className="hidden"
+                                            disabled={isUploading}
                                         />
                                     </div>
                                     {receiptFile && (
@@ -351,6 +355,7 @@ export default function MyRequestsPage() {
                                                 if (fileInput) fileInput.value = '';
                                             }}
                                             className="w-full"
+                                            disabled={isUploading}
                                         >
                                             Remove Selected File
                                         </Button>

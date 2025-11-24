@@ -153,11 +153,11 @@ const purchaseRequestSlice = createSlice({
         // Submit receipt
         builder
             .addCase(submitReceipt.pending, (state) => {
-                state.isLoading = true;
+                // Don't set isLoading here - let the component handle upload loading state
                 state.error = null;
             })
             .addCase(submitReceipt.fulfilled, (state, action) => {
-                state.isLoading = false;
+                // Don't set isLoading here - the refetch will handle table loading
                 const index = state.requests.findIndex((req) => req.id === action.payload.id);
                 if (index !== -1) {
                     state.requests[index] = action.payload;
@@ -167,7 +167,6 @@ const purchaseRequestSlice = createSlice({
                 }
             })
             .addCase(submitReceipt.rejected, (state, action) => {
-                state.isLoading = false;
                 state.error = action.payload as string;
             });
 
