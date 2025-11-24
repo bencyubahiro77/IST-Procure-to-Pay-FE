@@ -41,18 +41,33 @@ export const createPurchaseRequest = createAsyncThunk(
 // Fetch all purchase requests (filtered by role)
 export const fetchPurchaseRequests = createAsyncThunk(
     'purchaseRequests/fetchAll',
-    async (_, { rejectWithValue }) => {
+    async (page: number = 1, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(API_ENDPOINTS.PURCHASE_REQUESTS);
+            const response = await axiosInstance.get(API_ENDPOINTS.PURCHASE_REQUESTS, {
+                params: {
+                    page
+                }
+            });
             const data = response.data;
 
-            if (Array.isArray(data)) {
-                return data as PurchaseRequest[];
-            } else if (data && Array.isArray(data.results)) {
-                return data.results as PurchaseRequest[];
+            // Return full response with pagination metadata
+            if (data && typeof data === 'object') {
+                return {
+                    results: Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []),
+                    count: data.count || (Array.isArray(data) ? data.length : 0),
+                    next: data.next || null,
+                    previous: data.previous || null,
+                    currentPage: page
+                };
             }
 
-            return [] as PurchaseRequest[];
+            return {
+                results: [],
+                count: 0,
+                next: null,
+                previous: null,
+                currentPage: page
+            };
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to fetch purchase requests');
         }
@@ -135,7 +150,7 @@ export const submitReceipt = createAsyncThunk(
                     },
                 }
             );
-            await dispatch(fetchPurchaseRequests());
+            await dispatch(fetchPurchaseRequests(1));
             return response.data as PurchaseRequest;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.detail || 'Failed to submit receipt');

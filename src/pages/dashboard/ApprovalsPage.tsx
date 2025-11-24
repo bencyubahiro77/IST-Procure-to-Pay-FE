@@ -12,6 +12,7 @@ import { CheckCircle, XCircle, Clock, Eye } from 'lucide-react';
 import type { PurchaseRequest } from '@/types';
 import { DataTable } from '@/components/shared/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
+import { Pagination } from '@/components/ui/pagination';
 import {
     Dialog,
     DialogContent,
@@ -25,7 +26,7 @@ export default function ApprovalsPage() {
     const dispatch = useAppDispatch();
     const { toast } = useToast();
     const { user } = useAppSelector((state) => state.auth);
-    const { requests, isLoading } = useAppSelector((state) => state.purchaseRequests);
+    const { requests, isLoading, count, currentPage } = useAppSelector((state) => state.purchaseRequests);
     const [selectedRequest, setSelectedRequest] = useState<PurchaseRequest | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [approveConfirmOpen, setApproveConfirmOpen] = useState(false);
@@ -34,8 +35,12 @@ export default function ApprovalsPage() {
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
-        dispatch(fetchPurchaseRequests());
+        dispatch(fetchPurchaseRequests(1));
     }, [dispatch]);
+
+    const handlePageChange = (page: number) => {
+        dispatch(fetchPurchaseRequests(page));
+    };
 
     // Helper to check if current user has already acted on this request
     const hasUserActed = (request: PurchaseRequest): { acted: boolean; approved?: boolean } => {
@@ -74,7 +79,7 @@ export default function ApprovalsPage() {
                 description: `Successfully approved "${pendingActionRequest.title}"`,
                 variant: "success",
             });
-            await dispatch(fetchPurchaseRequests());
+            await dispatch(fetchPurchaseRequests(currentPage));
         } catch (error) {
             toast({
                 title: "Approval Failed",
@@ -104,7 +109,7 @@ export default function ApprovalsPage() {
                 description: `Successfully rejected "${pendingActionRequest.title}"`,
                 variant: "default",
             });
-            await dispatch(fetchPurchaseRequests());
+            await dispatch(fetchPurchaseRequests(currentPage));
         } catch (error) {
             toast({
                 title: "Rejection Failed",
@@ -257,12 +262,24 @@ export default function ApprovalsPage() {
                             </CardContent>
                         </Card>
                     ) : (
-                        <DataTable
-                            columns={columns}
-                            data={relevantRequests}
-                            isLoading={isLoading}
-                            searchPlaceholder="Search requests..."
-                        />
+                        <>
+                            <DataTable
+                                columns={columns}
+                                data={relevantRequests}
+                                isLoading={isLoading}
+                                searchPlaceholder="Search requests..."
+                            />
+                            {count > 10 && (
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={Math.ceil(count / 10)}
+                                    totalItems={count}
+                                    itemsPerPage={10}
+                                    onPageChange={handlePageChange}
+                                    disabled={isLoading}
+                                />
+                            )}
+                        </>
                     )}
 
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -352,7 +369,7 @@ export default function ApprovalsPage() {
                         isLoading={isProcessing}
                     />
                 </div>
-            </main>
-        </div>
+            </main >
+        </div >
     );
 }

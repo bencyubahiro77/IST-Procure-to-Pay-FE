@@ -11,6 +11,7 @@ import { FileText, PlusCircle, Eye, Trash2, Upload } from 'lucide-react';
 import type { PurchaseRequest } from '@/types';
 import { DataTable } from '@/components/shared/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
+import { Pagination } from '@/components/ui/pagination';
 import {
     Dialog,
     DialogContent,
@@ -25,7 +26,7 @@ export default function MyRequestsPage() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const { toast } = useToast();
-    const { requests, isLoading } = useAppSelector((state) => state.purchaseRequests);
+    const { requests, isLoading, count, currentPage } = useAppSelector((state) => state.purchaseRequests);
     const [selectedRequest, setSelectedRequest] = useState<PurchaseRequest | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -39,8 +40,12 @@ export default function MyRequestsPage() {
     const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
-        dispatch(fetchPurchaseRequests());
+        dispatch(fetchPurchaseRequests(1));
     }, [dispatch]);
+
+    const handlePageChange = (page: number) => {
+        dispatch(fetchPurchaseRequests(page));
+    };
 
     const myRequests = Array.isArray(requests) ? requests : [];
 
@@ -61,7 +66,7 @@ export default function MyRequestsPage() {
                 description: `Successfully deleted "${requestToDelete.title}"`,
                 variant: "success",
             });
-            await dispatch(fetchPurchaseRequests());
+            await dispatch(fetchPurchaseRequests(currentPage));
         } catch (error) {
             toast({
                 title: "Delete Failed",
@@ -117,7 +122,7 @@ export default function MyRequestsPage() {
             });
 
             setReceiptDialogOpen(false);
-            dispatch(fetchPurchaseRequests());
+            dispatch(fetchPurchaseRequests(currentPage));
         } catch (error) {
             toast({
                 title: "Upload Failed",
@@ -247,12 +252,24 @@ export default function MyRequestsPage() {
                             </CardContent>
                         </Card>
                     ) : (
-                        <DataTable
-                            columns={columns}
-                            data={myRequests}
-                            isLoading={isLoading}
-                            searchPlaceholder="Search requests..."
-                        />
+                        <>
+                            <DataTable
+                                columns={columns}
+                                data={myRequests}
+                                isLoading={isLoading}
+                                searchPlaceholder="Search requests..."
+                            />
+                            {count > 10 && (
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={Math.ceil(count / 10)}
+                                    totalItems={count}
+                                    itemsPerPage={10}
+                                    onPageChange={handlePageChange}
+                                    disabled={isLoading}
+                                />
+                            )}
+                        </>
                     )}
 
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -282,7 +299,7 @@ export default function MyRequestsPage() {
                                         <div className="text-right">
                                             <span className="text-sm text-muted-foreground mr-2">Total Amount:</span>
                                             <span className="text-lg font-bold">
-                                                ${Number(selectedRequest.amount).toFixed(2)}
+                                                RWF {Number(selectedRequest.amount).toFixed(2)}
                                             </span>
                                         </div>
                                     </div>

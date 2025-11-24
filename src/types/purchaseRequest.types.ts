@@ -50,6 +50,10 @@ export interface PurchaseRequestState {
     error: string | null;
     total: number;
     lastFetched: number | null;
+    count: number;
+    next: string | null;
+    previous: string | null;
+    currentPage: number;
 }
 
 export interface PurchaseRequestFormData {

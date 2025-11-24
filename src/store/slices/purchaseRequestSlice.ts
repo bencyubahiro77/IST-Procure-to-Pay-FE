@@ -18,6 +18,10 @@ const initialState: PurchaseRequestState = {
     error: null,
     total: 0,
     lastFetched: null,
+    count: 0,
+    next: null,
+    previous: null,
+    currentPage: 1,
 };
 
 const purchaseRequestSlice = createSlice({
@@ -42,6 +46,7 @@ const purchaseRequestSlice = createSlice({
                 state.isLoading = false;
                 state.requests.unshift(action.payload);
                 state.total += 1;
+                state.count += 1;
             })
             .addCase(createPurchaseRequest.rejected, (state, action) => {
                 state.isLoading = false;
@@ -56,8 +61,12 @@ const purchaseRequestSlice = createSlice({
             })
             .addCase(fetchPurchaseRequests.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.requests = action.payload;
-                state.total = action.payload.length;
+                state.requests = action.payload.results;
+                state.count = action.payload.count;
+                state.next = action.payload.next;
+                state.previous = action.payload.previous;
+                state.currentPage = action.payload.currentPage;
+                state.total = action.payload.count;
                 state.lastFetched = Date.now();
             })
             .addCase(fetchPurchaseRequests.rejected, (state, action) => {

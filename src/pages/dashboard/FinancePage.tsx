@@ -16,15 +16,20 @@ import {
 } from "@/components/ui/dialog";
 import { CheckCircle, Search, FileText, Download, Info, AlertCircle, XCircle } from 'lucide-react';
 import type { PurchaseRequest } from '@/types';
+import { Pagination } from '@/components/ui/pagination';
 
 export default function FinancePage() {
     const dispatch = useAppDispatch();
-    const { requests, isLoading } = useAppSelector((state) => state.purchaseRequests);
+    const { requests, isLoading, count, currentPage } = useAppSelector((state) => state.purchaseRequests);
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        dispatch(fetchPurchaseRequests());
+        dispatch(fetchPurchaseRequests(1));
     }, [dispatch]);
+
+    const handlePageChange = (page: number) => {
+        dispatch(fetchPurchaseRequests(page));
+    };
 
     const filteredRequests = requests.filter((req: PurchaseRequest) => {
         const matchesSearch = req.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -281,6 +286,16 @@ export default function FinancePage() {
                                     </CardContent>
                                 </Card>
                             ))}
+                            {count > 10 && (
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={Math.ceil(count / 10)}
+                                    totalItems={count}
+                                    itemsPerPage={10}
+                                    onPageChange={handlePageChange}
+                                    disabled={isLoading}
+                                />
+                            )}
                         </div>
                     )}
                 </div>
